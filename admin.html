@@ -82,7 +82,7 @@
 <script>window.HURANTEA_OWNER_PAGE = true;</script>
 <script src="config.js?v=20261110c"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js"></script>
+<script src="assets/core.js?v=20261110d"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -283,6 +283,9 @@
     if (j.status === "paid" && j.payout_status === "pending") return btn(j, "sent");
     return "";
   }
+  // delete: never for jobs where client money is held or was paid out
+  const canDelete = (j) => !["held", "released"].includes(j.payment_status);
+  const delBtn = (j) => canDelete(j) ? `<button class="btn btn-ghost btn-sm" style="margin:2px;opacity:.75" data-del="${j.id}" title="Delete this job for good">Delete</button>` : "";
   const PAYLBL = { none: "—", awaiting: "Awaiting payment", held: "Held until delivery", released: "Released", refunded: "Refunded" };
   const pendingPayouts = () => data.jobs.filter((j) => j.status === "paid" && j.payout_status === "pending");
   function moneyView() {
@@ -414,7 +417,7 @@
           <td>${matchCell(j, q)}</td>
           <td>${j.offer_usd != null ? `<b>${money(j.offer_usd)}</b><div class="muted" style="font-size:.82rem">fee ${money(q.fee)}</div>` : "—"}</td>
           <td><span class="tag ${st[1]}">${st[0]}</span><div class="muted" style="font-size:.78rem;margin-top:4px">${PAYLBL[j.payment_status] || ""}</div></td>
-          <td>${actions(j)}</td></tr>`; }).join("") || `<tr><td colspan="6" class="muted">No orders yet.</td></tr>`}
+          <td>${actions(j)}${delBtn(j)}</td></tr>`; }).join("") || `<tr><td colspan="6" class="muted">No orders yet.</td></tr>`}
         </tbody></table></div>`,
       talent: `<div class="card tablewrap">${toolbar("talent")}<table><thead><tr><th>Name</th><th>Contact</th><th>Skills</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>
         ${data.talent.map((t) => `<tr data-s="${esc([t.name, t.contact, t.country, t.skills].join(' ').toLowerCase())}"><td><b>${esc(t.name)}</b><div class="muted" style="font-size:.82rem">${esc(t.country || "")}</div></td><td>${esc(t.contact)}</td><td style="max-width:320px">${esc(t.skills)}</td><td>${money(t.rate_usd)}/h</td>
@@ -474,6 +477,9 @@
     dash.querySelectorAll(".sp-sum").forEach((b) => (b.onclick = () => { const open = b.getAttribute("aria-expanded") !== "true"; b.setAttribute("aria-expanded", String(open)); b.nextElementSibling.hidden = !open; }));
     const nn = document.getElementById("needNew"); if (nn) nn.onclick = () => load(true);
     const hm = document.getElementById("histMore"); if (hm) hm.onclick = () => { window._nHistN = (window._nHistN || 100) + 100; draw(); };
+    dash.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.del) || {};
+      if (!confirm(`Delete "${j.title || "this job"}" for good? This can't be undone.`)) return; b.disabled = true;
+      try { await api.deleteJob(isNaN(+b.dataset.del) ? b.dataset.del : +b.dataset.del); toast("Job deleted"); } catch (e) { toast(e.message); b.disabled = false; } load(); }));
     dash.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { tab = b.dataset.go; draw(); }));
     // search + filter without redrawing (keeps focus), and CSV export of exactly what you see
     const applyQ = (k) => { const box = dash.querySelector(`[data-q="${k}"]`); if (!box) return; const t = q[k].toLowerCase().trim(), st = q[k + "St"] || "";

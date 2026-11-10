@@ -326,6 +326,7 @@
       },
       async signIn() { await wait(300); return true; }, async signOut() {}, async session() { return true; }, async onAuth() {}, async isOwner() { return true; },
       async jobs() { return db.jobs; }, async talent() { return db.talent; }, async log() { return db.log; },
+      async deleteJob(i) { db.jobs = db.jobs.filter((x) => x.id !== i); commit("owner"); },
       async updateJob(i, patch) { const j = db.jobs.find((x) => x.id === i) || {}; Object.assign(j, patch, { updated_at: now() }); commit("owner");
         // preview: the Boss reacts a few seconds later, like the live one on its next run
         if (j.status === "received" || (j.route === "ai" && j.status === "accepted" && j.payment_status === "held" && !(j.ai_work || {}).final)) setTimeout(boss, 2500); },
@@ -404,6 +405,7 @@
       async talent() { await ready; return ok(await sb.from("talent").select("*").order("created_at", { ascending: false }).limit(1000)); },
       async log() { await ready; return ok(await sb.from("boss_log").select("*").order("at", { ascending: false }).limit(80)); },
       async updateJob(i, patch) { await ready; ok(await sb.from("jobs").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", i)); },
+      async deleteJob(i) { await ready; const r = await sb.from("jobs").delete().eq("id", i).select("id"); ok(r); if (!r.data || !r.data.length) throw new Error("Could not delete this job."); },
       async updateTalent(i, patch) { await ready; ok(await sb.from("talent").update(patch).eq("id", i)); },
       async runBoss() {
         await ready; const s = (await sb.auth.getSession()).data.session;
