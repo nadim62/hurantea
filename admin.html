@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" style="background:#000">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f7f8fb">
+<title>Owner · HURANTEA</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg"><link rel="apple-touch-icon" href="assets/logo-512.png">
+<script>try{var d=document.documentElement;d.setAttribute("data-theme",JSON.parse(localStorage.getItem("hurantea-theme"))||"dark");d.dataset.motion=JSON.parse(localStorage.getItem("hurantea-motion"))||"on";var bb=JSON.parse(localStorage.getItem("hurantea-bright"));if(typeof bb!=="number")bb=50;if(bb>=10&&bb<100){var kk=(100-bb)/100;d.style.setProperty("--dim",(kk*.35).toFixed(3));d.style.setProperty("--scene-dim",(kk*.85).toFixed(3))}var l=JSON.parse(localStorage.getItem("hurantea-lang"));if(/^(ar|bn|hi|ur|zh|es|fr|pt|id)$/.test(l)){d.lang=l;d.dir=(l==="ar"||l==="ur")?"rtl":"ltr";document.write('<script src="assets/lang/'+l+'.js"><\/script>')}else if(l&&l!=="en"&&/^[a-z]{2,3}(-[A-Z]{2})?$/.test(l)){d.lang=l;d.dir=/^(fa|he|ps)$/.test(l)?"rtl":"ltr";var c=localStorage.getItem("hurantea-pack-"+l);if(c)window.HURANTEA_LANG={code:l,dir:d.dir,dict:JSON.parse(c),pat:[]}}}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/hud.css">
+<style>/* DIAG-050: the owner area is a work tool — no targeting reticle or chapter captions over tables, and a calmer background */
+  .hud-ret, .hud-br, .hud-scene { display: none !important; }
+  canvas.cosmos { opacity: .35; }
+  /* BACKOFFICE-002 dynamic 3D depth on frames only, text stays flat; motion = transform/opacity ≤180 ms, once */
+  .need { position: relative; transform-style: preserve-3d; transition: transform .16s ease, box-shadow .16s ease; border-left: 3px solid #5a5a5a; }
+  .need.l2 { border-left-color: #bdbdbd; } .need.l3 { border-left-color: #fff; }
+  .need::after { content: ""; position: absolute; inset: 6px -6px -6px 6px; border: 1px solid rgba(255,255,255,.07); border-radius: inherit; z-index: -1; pointer-events: none; transform: translateZ(-1px); }   /* the panel behind: a stacked layer */
+  .need:hover, .need:focus-within { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.45); }
+  .need-lvl { font: 600 .64rem/1 var(--mono, ui-monospace, monospace); letter-spacing: .14em; text-transform: uppercase; color: #9a9a9a; writing-mode: vertical-rl; transform: rotate(180deg); }
+  .need.l3 .need-lvl { color: #fff; } .need.l2 .need-lvl { color: #cfcfcf; }
+  .need-sum { margin: 0 0 10px; color: #bdbdbd; } .need-new { margin: 0 0 10px; }
+  #dash [hidden] { display: none !important; }   /* buttons and panels marked hidden really stay hidden */
+  .instr { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0; margin-top: 16px; position: relative; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(10,10,12,.92); }
+  .instr::before { content: ""; position: absolute; inset: -8px 8px auto 8px; height: 8px; border: 1px solid rgba(255,255,255,.08); border-bottom: 0; border-radius: 10px 10px 0 0; transform: perspective(600px) rotateX(38deg); transform-origin: bottom; pointer-events: none; }   /* the instrument's top bevel */
+  .instr-cell { padding: 16px 18px; border-right: 1px solid rgba(255,255,255,.08); } .instr-cell:last-child { border-right: 0; }
+  .instr .lbl { font: 600 .66rem/1 var(--mono, ui-monospace, monospace); letter-spacing: .14em; text-transform: uppercase; color: #9a9a9a; }
+  .instr-big { font-size: 1.5rem; font-weight: 650; margin: 8px 0 10px; letter-spacing: -.01em; } .instr-big .muted { font-size: .95rem; font-weight: 500; }
+  .instr[data-state="Paused"] .instr-state .instr-big, .instr[data-state="Limit reached"] .instr-state .instr-big { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
+  .instr.changed .instr-state { animation: stateIn .18s ease-out 1; }
+  @keyframes stateIn { from { transform: translateY(4px); opacity: .4; } to { transform: none; opacity: 1; } }
+  .instr-form { display: flex; gap: 8px; margin: 8px 0 6px; } .instr-form input { max-width: 120px; } .instr-note { font-size: .8rem; }
+  .spine { list-style: none; margin: 4px 0 0; padding: 0 0 0 22px; position: relative; }
+  .spine::before { content: ""; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 1px; background: linear-gradient(#fff, rgba(255,255,255,.08)); }
+  .spine li { position: relative; padding: 8px 0; }
+  .spine li::before { content: ""; position: absolute; left: -20px; top: 15px; width: 9px; height: 9px; border-radius: 50%; background: #0a0a0a; border: 1px solid #8a8a8a; }
+  .spine li.a-owner::before { background: #fff; border-color: #fff; } .spine li.a-ai-boss::before { border-color: #fff; }
+  .sp-sum { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 6px 8px; border-radius: 6px; transition: transform .14s ease, background .14s; color: inherit; font: inherit; }
+  .sp-sum:hover, .sp-sum:focus-visible { background: rgba(255,255,255,.05); transform: translateX(3px); } .sp-sum:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .sp-sum[aria-expanded="true"] .sp-what::after { content: " ▴"; color: #9a9a9a; } .sp-sum[aria-expanded="false"] .sp-what::after { content: " ▾"; color: #6a6a6a; }
+  .spine time { color: #9a9a9a; font-size: .8rem; font-variant-numeric: tabular-nums; min-width: 150px; }
+  .sp-what { font-size: .9rem; } .sp-body { margin: 6px 0 4px 6px; padding: 10px 12px; border-left: 1px solid rgba(255,255,255,.18); font-size: .84rem; line-height: 1.6; }
+  html[data-motion="off"] :is(.need, .sp-sum, .instr-state) { transition: none !important; animation: none !important; }
+  @media (prefers-reduced-motion: reduce) { :is(.need, .sp-sum, .instr-state) { transition: none !important; animation: none !important; } }
+  /* BACKOFFICE-001 */
+  .adm-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .adm-tools input[type=search] { flex: 1 1 260px; min-width: 0; }
+  .adm-tools select { flex: 0 1 200px; }
+  .adm-count { font-size: .8rem; margin-left: auto; }
+  .adm-needs { display: grid; gap: 10px; }
+  .need { display: grid; grid-template-columns: 16px 1fr auto; gap: 14px; align-items: center; padding: 14px 18px; }
+  .need .muted { font-size: .88rem; margin-top: 2px; }
+  .need-dot { width: 10px; height: 10px; border-radius: 50%; background: #8a8a8a; }
+  .need.l3 .need-dot { background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.12); }
+  .need.l2 .need-dot { background: #cfcfcf; }
+  .need-none { padding: 22px; }
+  .ai-ctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+  @media (max-width: 640px) { .instr-cell { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.08); } .need { grid-template-columns: 16px 1fr; } .need .btn { grid-column: 2; justify-self: start; } }
+</style>
+<link rel="stylesheet" href="assets/space3d.css">
+</head>
+<body>
+<div id="ribbon" class="preview-ribbon hidden">Preview mode — sample data only. Connect the database to go live.</div>
+<nav class="nav"><div class="wrap">
+  <a href="index.html" class="logo"><span class="logo-mark" style="background:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;padding:0 !important;width:34px;height:34px;filter:drop-shadow(0 0 6px rgba(198,161,91,.25))"><img src="assets/logo-mark.svg" alt="" width="34" height="34" style="display:block;width:100%;height:100%"></span>HURANTEA <span class="tag" style="margin-left:6px">Owner</span></a>
+  <div class="nav-right"><div class="theme" id="theme"></div><button class="btn btn-ghost btn-sm hidden" id="out">Sign out</button></div>
+</div></nav>
+
+<main class="wrap page" id="app">
+  <div class="card" id="login" style="max-width:420px;margin:40px auto">
+    <h2>Owner sign-in</h2><p class="muted">This area shows profits, orders and client data. Only the owner account can open it.</p>
+    <form class="form" id="lf">
+      <label>Email<input name="email" type="email" required autocomplete="username"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn btn-primary" type="submit">Sign in</button>
+    </form>
+  </div>
+  <div id="dash" class="hidden"></div>
+</main>
+
+<script>window.HURANTEA_OWNER_PAGE = true;</script>
+<script src="config.js"></script>
+<script src="assets/bright.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/universe.js"></script>
+<script src="assets/cosmos.js"></script>
+<script src="assets/hud.js"></script>
+<script>
+(function () {
+  const { api, esc, money, toast, STATUS, C } = N;
+  N.mountThemeMenu(document.getElementById("theme"), [["#money", N.ICONS.card, "Payments & payouts"]]);
+  addEventListener("hashchange", () => { if (location.hash === "#money" && !dash.classList.contains("hidden")) { tab = "money"; draw(); } });
+  if (!N.LIVE) document.getElementById("ribbon").classList.remove("hidden");
+  const login = document.getElementById("login"), dash = document.getElementById("dash"), out = document.getElementById("out");
+  let tab = location.hash === "#money" ? "money" : "needs", q = { orders: "", talent: "", ordersSt: "", history: "", dept: "" }, data = { jobs: [], talent: [], log: [], settings: {}, ratings: [], audit: [], ai: {}, ops: [], staff: [] };
+
+  async function enter() {
+    try {
+      if (!(await api.session())) return;
+      if (!(await api.isOwner())) {
+        // two-step login: right account, second step still missing → ask for the 6-digit code instead of refusing
+        if (await api.isOwnerAccount().catch(() => false) && await api.mfaNeeded().catch(() => false)) return askCode();
+        toast("This account is not the owner."); await api.signOut(); return; }
+      login.classList.add("hidden"); dash.classList.remove("hidden"); out.classList.remove("hidden");
+      await load(); clearInterval(window._nLoad); window._nLoad = setInterval(load, 20000);   // one refresh timer, never stacked
+    } catch (e) { toast(e.message); }
+  }
+  document.getElementById("lf").onsubmit = async (e) => {
+    e.preventDefault(); const f = e.target;
+    // logging back in reloads the page once, so every tab, timer and number starts fresh with the new session
+    try { await api.signIn(f.email.value.trim(), f.password.value); if (N.LIVE && reloadOnce()) return; /* reload just happened → open the dashboard directly */ await enter(); } catch (err) { toast(err.message || "Sign-in failed"); }
+  };
+  out.onclick = async () => { await api.signOut(); location.reload(); };
+
+  async function askCode() {
+    const f = await api.mfaFactors().catch(() => []); if (!f.length) { toast("Two-step login is on, but no app was found. Sign in again."); return; }
+    login.classList.remove("hidden");
+    login.innerHTML = `<div class="card" style="max-width:420px;margin:60px auto"><h1 style="font-size:1.6rem;margin-top:0">Two-step login</h1>
+      <p class="muted">Open your authenticator app and type the 6-digit code for HURANTEA.</p>
+      <form id="codeF" class="form"><label>Code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required autofocus></label>
+      <div><button class="btn btn-primary" type="submit">Continue</button> <button class="btn btn-ghost" type="button" id="codeOut">Sign out</button></div></form></div>`;
+    document.getElementById("codeOut").onclick = async () => { await api.signOut(); location.reload(); };
+    document.getElementById("codeF").onsubmit = async (e) => { e.preventDefault(); const b = e.target.querySelector("button[type=submit]"); b.disabled = true;
+      try { await api.mfaVerify(f[0].id, e.target.code.value); location.reload(); } catch (err) { toast(err.message || "Wrong code — try the newest one in your app."); b.disabled = false; } };
+  }
+  async function mfaPanel() {
+    const box = document.getElementById("mfaBox"); if (!box) return;
+    let f = []; try { f = await api.mfaFactors(); } catch (e) { box.textContent = e.message; return; }
+    if (f.length) { box.innerHTML = `<span class="tag ok">On</span> Your authenticator app is needed at every owner login. To remove or replace it, use Authentication → Users in Supabase.`; return; }
+    box.innerHTML = `<span class="tag warn">Off</span> Protect the owner area with an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…). Even with your password, nobody gets in without the code from your phone.
+      <div style="margin-top:10px"><button class="btn btn-primary btn-sm" id="mfaOn">Turn on two-step login</button></div>`;
+    document.getElementById("mfaOn").onclick = async () => {
+      let en; try { en = await api.mfaEnroll(); } catch (e) { toast(e.message); return; }
+      window._nHold = true;   // keep this screen while you scan
+      box.innerHTML = `<ol style="margin:8px 0 10px 18px;padding:0"><li>Scan this QR code with your authenticator app.</li><li>Type the 6-digit code it shows.</li></ol>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start"><img src="${esc(en.qr)}" alt="QR code for your authenticator app" width="176" height="176" style="background:#fff;padding:8px;border-radius:6px">
+        <div><div class="muted" style="font-size:.82rem">Can't scan? Enter this key by hand:</div><code style="user-select:all;word-break:break-all">${esc(en.secret)}</code>
+        <form id="mfaF" class="form" style="margin-top:10px"><label>6-digit code<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label><div><button class="btn btn-primary btn-sm" type="submit">Confirm and turn on</button></div></form></div></div>`;
+      document.getElementById("mfaF").onsubmit = async (e) => { e.preventDefault();
+        try { await api.mfaVerify(en.id, e.target.code.value); window._nHold = false; toast("Two-step login is on"); load(true); } catch (err) { toast(err.message || "Wrong code — try again."); } };
+    };
+  }
+
+  async function load(force) {
+    try { const [jobs, talent, log, settings, ratings, audit, ai, ops, staff] = await Promise.all([api.jobs(), api.talent(), api.log(), api.getSettings(), api.ratings(), api.audit().catch(() => []), api.aiUsage().catch(() => ({})), api.opsTasks().catch(() => []), api.staffList().catch(() => [])]);
+      data = { jobs, talent, log, settings, ratings, audit, ai, ops, staff };
+      // DIAG-051: the 20-second refresh never wipes what you are typing or a two-step setup in progress
+      const a = document.activeElement, typing = a && dash.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+      const sig = JSON.stringify(needs().map((n) => n.title + n.detail));
+      if (!force && tab === "needs" && window._nSig && sig !== window._nSig && !dash.classList.contains("hidden")) { const b = document.getElementById("needNew"); if (b) { b.hidden = false; return; } }
+      if (force || !(typing || window._nHold)) draw(); }
+    catch (e) { toast(e.message); }
+  }
+
+  // MATCH-001: ranked experts, who is being asked now, and the private link to send them (owner sends it — nothing is sent automatically)
+  const CST = { waiting: ["next", ""], asking: ["asked now", "warn"], accepted: ["confirmed", "ok"], declined: ["declined", "bad"], expired: ["no answer", "bad"], client_declined: ["client wanted another", ""] };
+  const expertLink = (key) => ((window.HURANTEA_CONFIG||{}).siteUrl ? window.HURANTEA_CONFIG.siteUrl.replace(/\/+$/, "") + "/" : location.href.replace(/admin\.html.*$/, "").replace(/#.*$/, "")) + "#/expert/" + key;   // owner area can live on its own page
+  const KIND = { writing: "Writing", translation: "Translation", website: "Website (file)", spreadsheet: "Spreadsheet", research: "Research summary", code: "Small script" };
+  function matchCell(j, q) {
+    const C = j.candidates || [];
+    if (j.route === "ai") return `<b>HURANTEA AI</b> <span class="tag" style="font-size:.7rem">${esc(KIND[j.ai_work?.kind] || j.ai_work?.kind || "AI")}</span><div class="muted" style="font-size:.8rem">A person: about ${money(q.humanEstimate)}${C.length ? ` · backup: ${esc(C.map((c) => c.name).join(", "))}` : ""}</div>`;
+    if (!C.length) return q.talentName ? `${esc(q.talentName)}<div class="muted" style="font-size:.82rem">${q.hours}h × ${money(q.rate)}</div>` : `<span class="muted">${q.reason ? esc(q.reason) : "—"}</span>`;
+    return C.map((c, i) => { const cs = CST[c.state] || [c.state, ""]; let send = "";
+      if (c.state === "asking") { const t = data.talent.find((x) => x.id === c.tid) || {}, link = expertLink(c.key), contact = String(t.contact || "");
+        const msg = `Hi ${c.name}, a new job on HURANTEA matches your skills: "${j.title}". Your pay: ${money(c.provider)} (${c.hours} h at your rate). Please accept or decline here: ${link}`;
+        const phone = contact.replace(/[^\d]/g, ""), isMail = contact.includes("@");
+        send = `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" data-copy="${esc(link)}">Copy link</button>
+          ${isMail ? `<a class="btn btn-ghost btn-sm" href="mailto:${esc(contact)}?subject=${encodeURIComponent("New job on HURANTEA: " + j.title)}&body=${encodeURIComponent(msg)}">Email</a>` : ""}
+          ${!isMail && phone.length >= 8 ? `<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/${phone}?text=${encodeURIComponent(msg)}">WhatsApp</a>` : ""}
+          <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="${esc(link)}">Open</a></div>
+          <div class="muted" style="font-size:.76rem">${esc(contact)} · asked ${new Date(c.asked_at).toLocaleString()}</div>`; }
+      return `<div style="margin-bottom:6px"><b>${i + 1}. ${esc(c.name)}</b> <span class="tag ${cs[1]}" style="font-size:.7rem">${cs[0]}</span><div class="muted" style="font-size:.8rem">${c.hours}h × ${money(c.rate)} = ${money(c.provider)} · client ${money(c.total)}</div>${send}</div>`; }).join("");
+  }
+
+  // BACKOFFICE-001 ① what needs you — computed from the live data, most urgent first
+  const ago = (t) => { const m = Math.max(0, (Date.now() - Date.parse(t)) / 60000); return m < 60 ? Math.round(m) + " min" : m < 2880 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " days"; };
+  const hrs = (t) => (Date.now() - Date.parse(t)) / 3600e3;
+  function needs() {
+    const S = data.settings || {}, ch = Number(S.confirmHours || 12), out = [], add = (lvl, title, detail, go) => out.push({ lvl, title, detail, go });
+    if (S.aiPaused) add(2, "AI Boss is paused", "New jobs are waiting until you resume it.", "boss");
+    if (N.LIVE && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add(3, "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago. It should run every 5 minutes — check the cron job in Supabase.`, "boss");
+    if ((data.ai?.today || 0) >= Number(S.aiDailyLimit || 200) * 0.9) add(2, "AI daily limit almost used", `${data.ai.today || 0} of ${S.aiDailyLimit || 200} AI calls used today.`, "boss");
+    for (const j of data.jobs) {
+      const w = j.ai_work || {};
+      const ht = (data.ops || []).find((k) => k.job_id === j.id && k.dept === "human" && k.status !== "done");
+      if (ht) add(ht.priority === "p1" || ht.priority === "p0" ? 3 : 2, ht.assignee ? "A person is finishing a job" : "Human needed", `"${j.title}" — ${ht.detail || "the AI could not finish it"}${ht.assignee ? "" : " Nobody has taken it yet."}`, "human");
+      if (j.status === "clarify" && hrs(j.updated_at) > 48) add(1, "Client hasn't answered the AI's questions", `"${j.title}" — asked ${ago(j.updated_at)} ago. Contact ${j.client_name} (${j.client_contact}) or cancel the request.`, "orders");
+      if (j.route === "ai" && j.status === "ai_check") add(2, "AI sample to check", `"${j.title}" — ${j.client_name} is waiting for the free sample and the price.`, "aiwork");
+      if (j.route === "ai" && j.status === "accepted" && w.final && !w.approved) add(3, "AI work to check", `"${j.title}" — the client has paid. Check it and deliver.`, "aiwork");
+      if (j.route === "ai" && j.status === "accepted" && !w.final && Number(w.fails || 0) >= 3) add(3, "AI work failed", `"${j.title}" — the AI could not finish it 3 times (${w.last_error || "error"}). Press Redo with AI in Orders → AI work, or refund the client.`, "aiwork");
+      else if (j.route === "ai" && j.status === "accepted" && j.payment_status === "held" && !w.final && hrs(j.updated_at) > 0.5) add(2, "AI work not made yet", `"${j.title}" — paid ${ago(j.updated_at)} ago. Check that the AI Boss is running.`, "boss");
+      const c = (j.candidates || []).find((x) => x.state === "asking");
+      if (j.status === "asking" && c && hrs(c.asked_at) > ch / 2) add(2, `${c.name} hasn't answered`, `"${j.title}" — asked ${ago(c.asked_at)} ago. Send a reminder, or wait: after ${ch} h the next expert is asked automatically.`, "orders");
+      if (j.status === "no_match") add(3, "No expert could confirm", `"${j.title}" — contact ${j.client_name} (${j.client_contact}) or find a new expert for these skills.`, "orders");
+      if (j.status === "searching" && hrs(j.updated_at || j.created_at) > 1) add(2, "No expert in your network fits", `"${j.title}" — recruit someone with these skills${j.skills?.length ? ": " + [].concat(j.skills).join(", ") : ""}.`, "orders");
+      if (j.status === "accepted" && j.payment_status === "awaiting" && hrs(j.updated_at) > 24) add(2, "Payment not received", `"${j.title}" — accepted ${ago(j.updated_at)} ago. Check with the client.`, "orders");
+      if (j.status === "accepted" && j.payment_status === "held" && hrs(j.updated_at) > 24 * 7) add(2, "Delivery may be late", `"${j.title}" — paid ${ago(j.updated_at)} ago, not delivered yet.`, "orders");
+      if (j.status === "delivered" && hrs(j.updated_at) > 24 * Number(S.releaseAfterDays || 7)) add(1, "Ready to release", `"${j.title}" — delivered ${ago(j.updated_at)} ago with no complaint.`, "orders");
+      if (j.status === "paid" && j.payout_status === "pending") add(2, "Payout to send", `"${j.title}" — ${money(j.quote?.providerPrice)} to ${j.quote?.talentName || "the expert"}.`, "money");
+    }
+    for (const t of data.talent) if (!t.id_verified && t.status === "active") add(1, "ID and age check", `${t.name} (${t.country || "—"}) joined ${ago(t.created_at)} ago — check ID before they can get paid jobs.`, "talent");
+    const rc = data.ratings.filter((r) => r.comment && !r.approved).length; if (rc) add(1, `${rc} comment(s) to review`, "Approve or hide before they appear on the website.", "ratings");
+    return out.sort((a, b) => b.lvl - a.lvl);
+  }
+  // OPS-001 the HURANTEA Ops board: one card per thing in motion, by department (= AI agent) and state, plus your own tasks
+  const DEPTS = { operations: "Operations", growth: "Growth & Sales", delivery: "Delivery & Matching", quality: "Quality & Safety", finance: "Finance & Risk", support: "Support & Reliability", human: "Human board" };
+  const COLS = [["ready", "To do"], ["working", "Agents working"], ["checking", "Checking"], ["waiting", "Waiting for you"], ["others", "Waiting for client or expert"], ["blocked", "Blocked"], ["done", "Done today"]];
+  function opsCards() {
+    const S = data.settings || {}, ch = Number(S.confirmHours || 12), rel = Number(S.releaseAfterDays || 7), out = [];
+    const add = (dept, state, pri, title, detail, go, task) => out.push({ dept, state, pri, title, detail, go, task });
+    if (S.aiPaused) add("operations", "blocked", "p1", "AI Boss is paused", "New jobs wait until you resume it.", "boss");
+    if (N.LIVE && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add("operations", "blocked", "p0", "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago.`, "boss");
+    for (const j of data.jobs) { const w = j.ai_work || {}, t = j.title, age = ago(j.updated_at || j.created_at);
+      if (j.status === "received") add("delivery", "working", "p2", t, "AI Boss is reading the request", "orders");
+      else if (j.status === "searching") hrs(j.updated_at || j.created_at) > 1 ? add("delivery", "blocked", "p2", t, "No expert in the network fits yet", "talent") : add("delivery", "working", "p2", t, "Looking for an expert", "orders");
+      else if (j.status === "clarify") add("support", "others", "p2", t, `Waiting for ${j.client_name}'s answers (${age})`, "orders");
+      else if (j.status === "ai_check") add("quality", "waiting", "p1", t, "AI sample and price to check", "aiwork");
+      else if (j.status === "asking") { const c = (j.candidates || []).find((x) => x.state === "asking") || {}; hrs(c.asked_at || j.updated_at) > ch ? add("delivery", "blocked", "p2", t, `${c.name || "The expert"} did not answer in time`, "orders") : hrs(c.asked_at || j.updated_at) > ch / 2 ? add("delivery", "others", "p1", t, `Follow up soon: ${c.name || "the expert"} hasn't answered`, "orders") : add("delivery", "others", "p2", t, `Waiting for ${c.name || "the expert"} to confirm`, "orders"); }
+      else if (j.status === "quoted") add("growth", "others", "p2", t, `Offer ${money(j.offer_usd)} sent, the client decides`, "orders");
+      else if (j.status === "accepted" && j.payment_status === "awaiting") hrs(j.updated_at) > 24 ? add("finance", "blocked", "p2", t, "Payment not received after 24 h", "orders") : add("finance", "others", "p2", t, "Waiting for the payment", "orders");
+      else if (j.status === "accepted" && j.route === "ai" && w.escalated) add("human", "blocked", "p1", t, "AI failed the quality scan twice — on the Human board", "human");
+      else if (j.status === "accepted" && j.route === "ai") Number(w.fails || 0) >= 3 ? add("delivery", "blocked", "p1", t, "The AI could not make the work", "aiwork") : w.final && !w.approved ? add("quality", "waiting", "p1", t, "Finished AI work to check, the client has paid", "aiwork") : add("delivery", "working", "p1", t, "AI is making the work", "orders");
+      else if (j.status === "accepted") hrs(j.updated_at) > 168 ? add("delivery", "blocked", "p2", t, "Delivery may be late", "orders") : add("delivery", "working", "p2", t, "The expert is working", "orders");
+      else if (j.status === "delivered") hrs(j.updated_at) > 24 * rel ? add("finance", "waiting", "p2", t, "Ready to release the payment", "orders") : add("finance", "others", "p2", t, "The client is reviewing the work", "orders");
+      else if (j.status === "paid" && j.payout_status === "pending" && j.route !== "ai") add("finance", "waiting", "p1", t, `Payout ${money(j.quote?.providerPrice)} to ${j.quote?.talentName || "the expert"}`, "money");
+      else if (j.status === "paid" && hrs(j.updated_at) < 24) add("finance", "done", "p2", t, "Completed and paid", "orders");
+      else if (j.status === "no_match") add("delivery", "blocked", "p1", t, "No expert could confirm", "orders"); }
+    for (const x of data.talent) if (!x.id_verified && x.status === "active") add("quality", "waiting", "p2", `ID check: ${x.name}`, "Check ID and age before paid jobs", "talent");
+    const rc = data.ratings.filter((r) => r.comment && !r.approved).length; if (rc) add("support", "waiting", "p2", `${rc} comment(s) to review`, "Approve or hide before they appear", "ratings");
+    for (const k of data.ops || []) { if (k.status === "done" && hrs(k.updated_at) > 24) continue; if (k.dept === "human") continue;   // shown on the Human board and as the job's card
+      add(k.dept, k.status, k.priority, k.title, [k.detail, k.due ? "Due " + new Date(k.due + "T12:00:00").toLocaleDateString() : ""].filter(Boolean).join(" · "), null, k); }
+    const rank = { p0: 0, p1: 1, p2: 2 }; return out.sort((a, b) => rank[a.pri] - rank[b.pri]);
+  }
+  function brief(cards) {
+    const J = data.jobs, day = (t) => t && hrs(t) < 24, S = data.settings || {};
+    const fees = J.filter((j) => j.status === "paid" && day(j.updated_at)).reduce((s, j) => s + Number(j.quote?.fee || 0), 0);
+    const held = J.filter((j) => j.payment_status === "held").reduce((s, j) => s + Number(j.offer_usd || 0), 0);
+    const rows = [["New requests", J.filter((j) => day(j.created_at)).length], ["AI samples made", J.filter((j) => day(j.ai_work?.at)).length], ["Delivered", J.filter((j) => ["delivered", "paid"].includes(j.status) && day(j.updated_at)).length], ["Fees earned", money(fees)], ["Client money held", money(held)], ["Waiting for you", cards.filter((c) => c.state === "waiting").length], ["Blocked", cards.filter((c) => c.state === "blocked").length], ["AI calls today", `${data.ai?.today || 0} / ${S.aiDailyLimit || 200}`]];
+    const top = cards.filter((c) => c.state === "waiting" || c.state === "blocked").slice(0, 3);
+    const text = `HURANTEA daily brief, ${new Date().toLocaleDateString()}\n` + rows.map(([k, v]) => `${k}: ${v}`).join("\n") + (top.length ? "\n\nFirst:\n" + top.map((c) => `- ${c.title}: ${c.detail}`).join("\n") : "");
+    return { rows, top, text };
+  }
+  const ACTOR = { owner: "You", "ai-boss": "AI Boss", client: "Client", expert: "Expert", system: "System" };
+  const short = (v) => { if (v == null || v === "") return "—"; const t = typeof v === "string" ? v : JSON.stringify(v); return t.length > 70 ? t.slice(0, 70) + "…" : t; };
+  function histText(a) {
+    const c = a.changes || {};
+    if (a.action === "insert") { const r = c.created || {}; return `New ${a.entity === "jobs" ? "request" : a.entity === "talent" ? "expert" : a.entity === "ratings" ? "rating" : a.entity === "ops_tasks" ? "task" : a.entity}: ${esc(r.title || r.name || (r.stars ? r.stars + "★" : ""))}`; }
+    if (a.action === "delete") return `Deleted ${a.entity}`;
+    const src = a.entity === "settings" ? (c.data && c.data.from === undefined ? c.data : null) : null;
+    const flat = a.entity === "settings" ? (src || (() => { const f = c.data?.from || {}, t = c.data?.to || {}, o = {}; for (const k of new Set([...Object.keys(f), ...Object.keys(t)])) if (JSON.stringify(f[k]) !== JSON.stringify(t[k])) o[k] = { from: f[k], to: t[k] }; return o; })()) : c;
+    const nice = (k, v) => { if (v == null || v === "") return "—";
+      if (k === "candidates" && Array.isArray(v)) return v.map((c) => `${c.name}: ${CST[c.state]?.[0] || c.state}`).join(" · ");
+      if (k === "quote" && typeof v === "object") return `${v.talentName || "—"} · ${money(v.total)}${v.confirmedByExpert ? " (confirmed)" : ""}`;
+      return short(v); };
+    return Object.entries(flat).map(([k, v]) => `<b>${esc(k)}</b> ${esc(nice(k, v?.from))} → ${esc(nice(k, v?.to))}`).join("<br>") || "—";
+  }
+  function csv(name, rows) {
+    const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))].filter((k) => !["token", "candidates"].includes(k));
+    const cell = (v) => { let t = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v); if (/^[=+\-@\t\r\n]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };   // no formula injection in Excel
+    const blob = new Blob(["\ufeff" + [cols.join(","), ...rows.map((r) => cols.map((k) => cell(r[k])).join(","))].join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `hurantea-${name}-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  const toolbar = (k, statuses) => `<div class="adm-tools"><input type="search" data-q="${k}" placeholder="Search name, title, contact, skill…" value="${esc(q[k])}" aria-label="Search">
+    ${statuses ? `<select data-qs="${k}St" aria-label="Filter by status"><option value="">All statuses</option>${statuses.map((x) => `<option value="${x}" ${q[k + "St"] === x ? "selected" : ""}>${esc((STATUS[x] || [x])[0])}</option>`).join("")}</select>` : ""}
+    <button class="btn btn-ghost btn-sm" data-csv="${k}">Export CSV</button><span class="muted adm-count" data-count="${k}"></span></div>`;
+
+  // order actions: payment -> delivery -> release -> payout
+  const ACT = {
+    payin:   { label: "Payment received", patch: { payment_status: "held" }, primary: true },
+    deliver: { label: "Mark delivered", patch: { status: "delivered" } },
+    release: { label: "Release payment", patch: { status: "paid", payment_status: "released", payout_status: "pending" }, primary: true },
+    refund:  { label: "Refund", patch: { status: "declined", payment_status: "refunded" } },
+    sent:    { label: "Payout sent", patch: { payout_status: "sent" }, primary: true },
+  };
+  const btn = (j, k) => `<button class="btn ${ACT[k].primary ? "btn-primary" : "btn-ghost"} btn-sm" style="margin:2px" data-act="${k}" data-id="${j.id}">${ACT[k].label}</button>`;
+  function actions(j) {
+    if (j.route === "ai" && j.status === "accepted" && j.payment_status === "held") return `<div class="muted" style="font-size:.8rem">${j.ai_work?.final ? (j.ai_work.approved ? "Delivered" : "Waiting for your check") : "AI is making it"}</div>` + btn(j, "refund");
+    if (j.status === "accepted" && j.payment_status === "awaiting") return `<div class="muted" style="font-size:.8rem">Waiting for payment</div>` + btn(j, "payin");
+    if (j.status === "accepted" && j.payment_status === "held") return btn(j, "deliver") + btn(j, "refund");
+    if (j.status === "delivered") return btn(j, "release") + btn(j, "refund");
+    if (j.status === "paid" && j.payout_status === "pending") return btn(j, "sent");
+    return "";
+  }
+  const PAYLBL = { none: "—", awaiting: "Awaiting payment", held: "Held until delivery", released: "Released", refunded: "Refunded" };
+  const pendingPayouts = () => data.jobs.filter((j) => j.status === "paid" && j.payout_status === "pending");
+  function moneyView() {
+    const S = data.settings || {}, sel = (n, opts) => `<select name="${n}">${opts.map(([v, l]) => `<option value="${v}" ${S[n] === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+    const T = Object.fromEntries(data.talent.map((t) => [t.id, t]));
+    const held = data.jobs.filter((j) => j.payment_status === "held").reduce((s, j) => s + Number(j.offer_usd || 0), 0);
+    const owed = pendingPayouts().reduce((s, j) => s + Number(j.quote?.providerPrice || 0), 0);
+    return `<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+        <div class="card kpi"><div class="lbl">Client money held until delivery</div><div class="val">${money(held)}</div></div>
+        <div class="card kpi"><div class="lbl">Payouts to send</div><div class="val">${money(owed)}</div></div>
+        <div class="card kpi"><div class="lbl">Your fees released</div><div class="val">${money(data.jobs.filter((j) => j.status === "paid").reduce((s, j) => s + Number(j.quote?.fee || 0), 0))}</div></div></div>
+      <div class="grid2" style="margin-top:14px">
+        <div class="card"><h3>Payment & payout settings</h3>
+          <form class="form" id="setForm">
+            <label>Clients pay with${sel("paymentProvider", [["stripe", "Stripe — cards (recommended)"], ["manual", "Manual payment link / bank transfer"]])}</label>
+            <label>Currency${sel("currency", [["USD", "US dollar (USD)"], ["AED", "UAE dirham (AED)"], ["EUR", "Euro (EUR)"]])}</label>
+            <label>Freelancers are paid through${sel("payoutProvider", [["payoneer", "Payoneer (recommended for Bangladesh)"], ["wise", "Wise Business"], ["bank", "Bank transfer"]])}</label>
+            <div class="row2">
+              <label>Payout schedule${sel("payoutSchedule", [["daily", "Daily"], ["weekly", "Weekly"], ["monthly", "Monthly"]])}</label>
+              <label>Auto-release after (days)<input name="releaseAfterDays" type="number" min="1" max="30" value="${esc(S.releaseAfterDays ?? 7)}"></label>
+              <label>Time each expert has to confirm (hours) <span class="hint">then the next expert is asked</span><input name="confirmHours" type="number" min="1" max="72" value="${esc(S.confirmHours ?? 12)}"></label>
+            </div>
+            <label>Auto-approve payouts up to (USD) <span class="hint">0 = you approve every payout</span><input name="autoPayoutLimit" type="number" min="0" value="${esc(S.autoPayoutLimit ?? 0)}"></label>
+            <div><button class="btn btn-primary" type="submit">Save settings</button></div>
+          </form></div>
+        <div class="card"><h3>Connections</h3>
+          <div class="side-list" style="margin-top:10px">
+            <div>${N.ICONS.card}<span><b>Stripe (client payments)</b><span class="tag warn" style="margin-left:6px">Not connected</span><br><span class="muted" style="font-size:.88rem">Create a Stripe account for your Dubai company, then add the keys to connect checkout and hold-until-delivery payments.</span></span></div>
+            <div>${N.ICONS.wallet}<span><b>${{ payoneer: "Payoneer", wise: "Wise Business", bank: "Bank" }[S.payoutProvider] || "Payoneer"} (freelancer payouts)</b><span class="tag warn" style="margin-left:6px">Not connected</span><br><span class="muted" style="font-size:.88rem">Until connected, the AI prepares each payout below and you send it in one click from your account.</span></span></div>
+            <div>${N.ICONS.shield}<span><b>Your profit → your bank</b><br><span class="muted" style="font-size:.88rem">Stripe pays your 15% fees automatically to your UAE business bank account on its payout schedule.</span></span></div>
+          </div></div>
+      </div>
+      <div class="card tablewrap" style="margin-top:14px"><h3>Payouts to send</h3><table><thead><tr><th>Freelancer</th><th>Pay to</th><th>Amount</th><th>Job</th><th></th></tr></thead><tbody>
+        ${pendingPayouts().map((j) => { const t = T[j.talent_id] || {}; return `<tr><td><b>${esc(t.name || j.quote?.talentName || "—")}</b>${t.id_verified ? ` <span class="tag ok">ID ✓</span>` : ` <span class="tag warn">ID check needed</span>`}</td>
+          <td>${esc({ payoneer: "Payoneer", wise: "Wise", bank: "Bank", other: "Other" }[t.payout_method] || "Not set")}<div class="muted" style="font-size:.82rem">${esc(t.payout_details || t.contact || "")}</div></td>
+          <td><b>${money(j.quote?.providerPrice)}</b></td><td>${esc(j.title)}</td><td>${btn(j, "sent")}</td></tr>`; }).join("") || `<tr><td colspan="5" class="muted">No payouts waiting.</td></tr>`}
+      </tbody></table></div>`;
+  }
+
+  function draw() {
+    const J = data.jobs, fee = (j) => Number(j.quote?.fee || 0);
+    const paid = J.filter((j) => j.status === "paid"), pipeline = J.filter((j) => ["quoted", "accepted", "delivered"].includes(j.status));
+    const earned = paid.reduce((s, j) => s + fee(j), 0), pending = pipeline.reduce((s, j) => s + fee(j), 0);
+    const gmv = paid.reduce((s, j) => s + Number(j.offer_usd || 0), 0);
+    const goal = C.goalUSD || 1e9, days = Math.max(1, Math.ceil((new Date(C.goalDate || "2027-12-31") - new Date()) / 864e5));
+    const pct = Math.min(100, (earned / goal) * 100);
+    const open = J.filter((j) => ["received", "searching"].includes(j.status)).length;
+
+    const N_ = needs(); window._nSig = JSON.stringify(N_.map((n) => n.title + n.detail));
+    const S = data.settings || {}, kinds = Array.isArray(S.aiKinds) ? S.aiKinds : Object.keys(KIND);
+    const Q = data.jobs.filter((j) => j.route === "ai" && (j.status === "ai_check" || (j.status === "accepted" && ((j.ai_work?.final && !j.ai_work?.approved) || Number(j.ai_work?.fails || 0) >= 3))));
+    const pre = (t) => `<pre style="white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;margin:6px 0 0;font-size:.84rem;line-height:1.55">${esc(t || "")}</pre>`;
+    // PIPE-001 internal: the quality scan of each round (makers, judge, score, problems)
+    const trace = (rounds) => (rounds || []).map((r) => `<div style="font-size:.82rem;margin-top:4px"><b>Round ${r.round}</b> <span class="muted">· checked by ${esc(r.judge)}</span> — ${(r.results || []).map((x) => `${esc(x.maker)} <b>${x.score}</b>${x.pass ? " ✓" : ""}${x.issues?.length ? ` <span class="muted">(${esc(x.issues.slice(0, 2).join("; "))})</span>` : ""}`).join(" · ")}</div>`).join("");
+    const H = (data.ops || []).filter((k) => k.dept === "human" && (k.status !== "done" || hrs(k.updated_at) < 168));
+    const staffName = (u) => (data.staff.find((x) => x.user_id === u) || {}).name || "a staff member";
+    const OC = opsCards(), B = brief(OC), shown = OC.filter((c) => !q.dept || c.dept === q.dept);
+    const PRI = { p0: ["P0 urgent", "bad"], p1: ["P1", "warn"], p2: ["P2", ""] };
+    const views = {
+      human: `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0">Human board</h3><p class="muted" style="margin:4px 0 0">Jobs the AI failed twice and no expert could take. Your staff see them on <b>staff.html</b> and get a notification.</p></div>
+          <button class="btn btn-ghost btn-sm" id="pushOwner">Turn on notifications on this device</button></div>
+          <div style="margin-top:12px;display:grid;gap:10px">${H.length ? H.map((k) => { const j = data.jobs.find((x) => x.id === k.job_id) || {}, paid = j.status === "accepted";
+            return `<div class="card" style="padding:12px 14px;box-shadow:none"><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag ${k.priority === "p2" ? "" : "warn"}">${esc(k.priority.toUpperCase())}</span><span class="tag ${k.status === "done" ? "ok" : ""}">${k.status === "done" ? "Done" : k.assignee ? "Taken by " + esc(staffName(k.assignee)) : "Open"}</span>${paid ? `<span class="tag">Paid</span>` : ""}</div>
+              <b style="display:block;margin-top:6px">${esc(j.title || k.title)}</b><div class="muted" style="font-size:.84rem">${esc(k.detail || "")}</div>
+              ${j.ai_work?.pipeline ? `<div style="margin-top:6px">${trace([...(j.ai_work.pipeline.sample || []), ...(j.ai_work.pipeline.final || [])])}</div>` : ""}
+              ${k.status !== "done" && paid ? `<label style="display:block;margin-top:10px">Finish it yourself <span class="hint">Optional</span><textarea data-ownwork="${k.id}" maxlength="200000" style="min-height:90px"></textarea></label><div class="cta-row" style="margin-top:8px"><button class="btn btn-primary btn-sm" data-owndeliver="${k.id}">Deliver to the client</button><button class="btn btn-ghost btn-sm" data-hdone="${k.id}">Mark done</button></div>`
+                : k.status !== "done" ? `<div class="cta-row" style="margin-top:8px"><button class="btn btn-ghost btn-sm" data-go="orders">Open the order</button><button class="btn btn-ghost btn-sm" data-hdone="${k.id}">Mark done</button></div>` : ""}</div>`; }).join("")
+            : `<div class="muted">Nothing on the Human board. The AI and your experts are handling everything.</div>`}</div></div>
+        <div class="card" style="margin-top:14px"><h3 style="margin-top:0">Staff</h3>
+          <div class="side-list" style="margin-top:6px">${data.staff.length ? data.staff.map((x) => `<div><span><b>${esc(x.name)}</b> <span class="tag ${x.active ? "ok" : ""}" style="margin-left:6px">${x.active ? "Active" : "Paused"}</span></span><button class="btn btn-ghost btn-sm" data-staff="${x.user_id}" data-to="${!x.active}">${x.active ? "Pause" : "Activate"}</button></div>`).join("") : `<div class="muted">No staff yet.</div>`}</div>
+          <form id="staffF" class="form" style="margin-top:12px"><div class="row2"><label>Their login email<input name="email" type="email" required placeholder="Create the login first in Supabase → Authentication"></label><label>Name<input name="name" required maxlength="120"></label></div>
+            <div><button class="btn btn-primary btn-sm" type="submit">Add to the team</button></div></form>
+          <p class="muted" style="margin:10px 0 0;font-size:.84rem">Staff only see Human-board jobs: the brief, what was promised and why it is there. Never payments, profits, other clients or this owner area.</p></div>`,
+      ops: `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h3 style="margin:0">Daily brief</h3><button class="btn btn-ghost btn-sm" id="briefCopy">Copy brief</button></div>
+          <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:12px">${B.rows.map(([k, v]) => `<div class="card kpi"><div class="lbl">${esc(k)}</div><div class="val">${esc(v)}</div></div>`).join("")}</div>
+          ${B.top.length ? `<p class="muted" style="margin:12px 0 4px">Do first:</p><ol style="margin:0 0 0 18px;padding:0">${B.top.map((c) => `<li><b>${esc(c.title)}</b> — ${esc(c.detail)}</li>`).join("")}</ol>` : `<p class="muted" style="margin:12px 0 0">Nothing is waiting for you or blocked.</p>`}</div>
+        <div class="card" style="margin-top:14px"><div class="adm-tools"><select data-qdept aria-label="Department"><option value="">All departments (6 AI agents)</option>${Object.entries(DEPTS).map(([k, n]) => `<option value="${k}" ${q.dept === k ? "selected" : ""}>${n}</option>`).join("")}</select><span class="muted adm-count">${shown.length} card(s)</span></div>
+          <div style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px">${COLS.map(([k, n]) => { const cs = shown.filter((c) => c.state === k);
+            return `<div><div class="muted" style="font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin:4px 2px 8px">${n} <span>(${cs.length})</span></div>${cs.map((c) => `<div class="card" style="padding:10px 12px;margin-bottom:8px;box-shadow:none">
+              <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="font-size:.68rem">${esc(DEPTS[c.dept] || c.dept)}</span>${PRI[c.pri][0] !== "P2" ? `<span class="tag ${PRI[c.pri][1]}" style="font-size:.68rem">${PRI[c.pri][0]}</span>` : ""}${c.task ? `<span class="tag" style="font-size:.68rem">Your task</span>` : ""}</div>
+              <b style="display:block;margin-top:6px;font-size:.92rem">${esc(c.title)}</b><div class="muted" style="font-size:.82rem;margin-top:2px">${esc(c.detail || "")}</div>
+              ${c.task ? `<select data-ost="${c.task.id}" aria-label="Task state" style="margin-top:8px;padding:6px 8px;font-size:.82rem">${COLS.filter(([s]) => s !== "others").map(([s, l]) => `<option value="${s}" ${c.task.status === s ? "selected" : ""}>${l}</option>`).join("")}</select>` : `<button class="linkbtn" style="margin-top:6px;font-size:.82rem" data-go="${c.go}">Open →</button>`}</div>`).join("") || `<div class="muted" style="font-size:.82rem;padding:4px 2px">—</div>`}</div>`; }).join("")}</div>
+          <p class="muted" style="margin:10px 0 0;font-size:.84rem">Cards appear by themselves from requests, experts, payments and the AI Boss. P0 stops automation, P1 needs you today, P2 shows up in the daily brief.</p></div>
+        <div class="card" style="margin-top:14px"><h3 style="margin-top:0">Add a task</h3><form id="opsF" class="form">
+          <label>Task<input name="title" required maxlength="200" placeholder="e.g. Post the first LinkedIn update"></label>
+          <div class="row2"><label>Department<select name="dept">${Object.entries(DEPTS).map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
+            <label>Priority<select name="priority"><option value="p2">P2 routine</option><option value="p1">P1 today</option><option value="p0">P0 urgent</option></select></label></div>
+          <div class="row2"><label>Due date <span class="hint">Optional</span><input name="due" type="date"></label><label>Note <span class="hint">Optional</span><input name="detail" maxlength="300"></label></div>
+          <div><button class="btn btn-primary btn-sm" type="submit">Add to the board</button></div></form></div>`,
+      aiwork: Q.length ? Q.map((j) => { const w = j.ai_work || {}, q = j.quote || {}, fin = j.status === "accepted";
+        return `<div class="card" style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><span class="tag ${fin ? "ok" : "warn"}">${fin ? "Finished work · client has paid" : "Sample and price · client is waiting"}</span>
+            <h3 style="margin:8px 0 2px">${esc(j.title)}</h3><div class="muted" style="font-size:.84rem">${esc(KIND[w.kind] || w.kind || "")} · ${esc(j.client_name)} · ${new Date(j.created_at).toLocaleString()}${w.versions > 1 ? ` · version ${w.versions}` : ""}</div></div>
+            <div style="text-align:right"><div class="muted" style="font-size:.8rem">${fin ? "Client paid" : "A person would cost about"}</div><b>${money(fin ? j.offer_usd : q.humanEstimate)}</b></div></div>
+          <div class="muted" style="margin:12px 0 2px;font-size:.84rem">Client asked for</div><div style="font-size:.9rem;white-space:pre-wrap;max-height:120px;overflow:auto">${esc(j.description)}</div>
+          ${(w.pipeline?.sample || w.pipeline?.final) ? `<div class="muted" style="margin:12px 0 2px;font-size:.84rem">Quality scan (internal)</div>${trace(fin ? w.pipeline.final : w.pipeline.sample)}` : ""}
+          ${fin ? "" : `<div class="muted" style="margin:12px 0 2px;font-size:.84rem">AI plan (the client sees this)</div><div style="font-size:.9rem">${esc(w.plan)}</div>`}
+          <div class="muted" style="margin:12px 0 2px;font-size:.84rem">${fin ? (w.final ? "Finished work (the client gets this)" : "The AI could not make it: " + esc(w.last_error || "error")) : "Free sample (the client sees this)"}</div>${fin && !w.final ? "" : pre(fin ? w.final : w.sample)}
+          ${fin ? `<label style="display:block;margin-top:12px">Note for a new version <span class="hint">Optional</span><input data-ainote="${j.id}" maxlength="500" placeholder="e.g. Shorter, friendlier, add the prices"></label>
+              <div class="cta-row" style="margin-top:10px">${w.final ? `<button class="btn btn-primary btn-sm" data-aiok="${j.id}" data-aiv="${esc(w.versions || 1)}">Approve and deliver</button>` : ""}<button class="btn btn-ghost btn-sm" data-airedo="${j.id}">Redo with AI</button></div>`
+            : `<label style="display:block;margin-top:12px;max-width:260px">Price for the client (USD)<input data-aiprice="${j.id}" type="number" min="1" step="0.5" value="${esc(q.total)}"></label>
+              <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-aiok="${j.id}">Approve and show to client</button><button class="btn btn-ghost btn-sm" data-aihuman="${j.id}">Give to an expert instead</button></div>`}
+        </div>`; }).join("")
+        : `<div class="card need-none"><b>No AI work to check.</b><div class="muted">${S.aiReview === false ? "Your check is switched off: AI samples and finished work go straight to clients. You can switch it on in the AI Boss tab." : "When HURANTEA's AI makes a sample or finishes a paid job, it waits here for your OK before the client sees it."}</div></div>`,
+      needs: `${N_.length ? `<p class="need-sum"><b>${N_.length}</b> need you${N_.filter((n) => n.lvl === 3).length ? ` · <b>${N_.filter((n) => n.lvl === 3).length}</b> urgent` : ""}</p>` : ""}<button class="btn btn-ghost btn-sm need-new" id="needNew" hidden>New updates — show</button>
+        <div class="adm-needs">${N_.length ? N_.map((n) => `<div class="card need l${n.lvl}" tabindex="-1"><span class="need-lvl">${["", "Routine", "Soon", "Urgent"][n.lvl]}</span><div><b>${esc(n.title)}</b><div class="muted">${esc(n.detail)}</div></div><button class="btn btn-ghost btn-sm" data-go="${n.go}">Open →</button></div>`).join("")
+        : `<div class="card need-none"><b>Nothing needs you right now.</b><div class="muted">New requests, expert answers and payments are handled by the AI Boss. This list fills up only when a person has to decide.</div></div>`}</div>`,
+      history: `<div class="card"><h3 style="margin-top:0">Two-step login</h3><div id="mfaBox" class="muted">Loading…</div></div>
+        <div class="card" style="margin-top:14px">${toolbar("history")}<ol class="spine">
+        ${(data.audit || []).slice(0, window._nHistN || 100).map((a) => { const keys = a.action === "update" ? Object.keys(a.entity === "settings" ? (a.changes?.data || {}) : (a.changes || {})) : [];
+          return `<li data-s="${esc(((ACTOR[a.actor] || "") + " " + a.entity + " " + JSON.stringify(a.changes || {})).toLowerCase())}" class="a-${esc(a.actor)}">
+          <button type="button" class="sp-sum" aria-expanded="false"><time>${new Date(a.at).toLocaleString()}</time><span class="tag">${esc(a.actor === "system" ? "Unknown (system)" : ACTOR[a.actor] || a.actor)}</span>
+            <span class="sp-what">${esc({ insert: "added", update: "changed", delete: "deleted" }[a.action] || a.action)} ${esc({ jobs: "request", talent: "expert", settings: "settings", ratings: "rating", ops_tasks: "task" }[a.entity] || a.entity)}${keys.length ? ": " + esc(keys.slice(0, 4).join(", ")) + (keys.length > 4 ? "…" : "") : ""}</span></button>
+            <div class="sp-body" hidden>${histText(a)}</div></li>`; }).join("") || `<li class="muted">No changes yet.</li>`}
+        </ol>${(data.audit || []).length > (window._nHistN || 100) ? `<button class="btn btn-ghost btn-sm" id="histMore">Show 100 more</button>` : ""}
+        <p class="muted" style="margin:12px 0 0">Every change by you, the AI Boss, clients and experts is recorded here and can't be edited or deleted. Secret tracking codes are never stored in the history.</p></div>`,
+      profits: `<div class="kpis">
+          <div class="card kpi"><div class="lbl">Profit earned (fees)</div><div class="val">${money(earned)}</div></div>
+          <div class="card kpi"><div class="lbl">Fees in progress</div><div class="val">${money(pending)}</div></div>
+          <div class="card kpi"><div class="lbl">Paid job volume</div><div class="val">${money(gmv)}</div></div>
+          <div class="card kpi"><div class="lbl">Talent in network</div><div class="val">${data.talent.filter((t) => t.status === "active").length}</div></div></div>
+        <div class="card" style="margin-top:14px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><b>North star: ${money(goal)} by ${esc(C.goalDate)}</b><span class="muted">${days} days left · ${pct.toFixed(6)}%</span></div>
+          <div class="bar" style="margin-top:12px"><i style="width:${Math.max(pct, 0.5)}%"></i></div>
+          <p class="muted" style="margin:12px 0 0">To reach it from here: about ${money((goal - earned) / days)} in fees per day, which is ${money(((goal - earned) / days) / (C.feeRate || 0.15))} of job volume per day.</p></div>`,
+      orders: `<div class="card tablewrap">${toolbar("orders", ["received", "searching", "clarify", "ai_check", "asking", "quoted", "accepted", "delivered", "paid", "no_match", "declined", "cancelled", "rejected"])}<table><thead><tr><th>Job</th><th>Client</th><th>Matched</th><th>Price</th><th>Status</th><th>Next step</th></tr></thead><tbody>
+        ${J.map((j) => { const st = STATUS[j.status] || [j.status, ""]; const q = j.quote || {};
+          return `<tr data-st="${esc(j.status)}" data-s="${esc([j.title, j.description, j.client_name, j.client_contact, q.talentName, (j.candidates || []).map((c) => c.name).join(' ')].join(' ').toLowerCase())}"><td><b>${esc(j.title)}</b><div class="muted" style="font-size:.82rem;max-width:340px">${esc(String(j.description).slice(0, 160))}</div><div class="muted" style="font-size:.78rem">${new Date(j.created_at).toLocaleString()}</div>${(j.files || []).length ? `<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${j.files.map((f, i) => `<button class="linkbtn" style="font-size:.78rem" data-jfile="${j.id}" data-i="${i}">📎 ${esc(f.name)}</button>`).join("")}</div>` : ""}</td>
+          <td>${esc(j.client_name)}<div class="muted" style="font-size:.82rem">${esc(j.client_contact)}</div></td>
+          <td>${matchCell(j, q)}</td>
+          <td>${j.offer_usd != null ? `<b>${money(j.offer_usd)}</b><div class="muted" style="font-size:.82rem">fee ${money(q.fee)}</div>` : "—"}</td>
+          <td><span class="tag ${st[1]}">${st[0]}</span><div class="muted" style="font-size:.78rem;margin-top:4px">${PAYLBL[j.payment_status] || ""}</div></td>
+          <td>${actions(j)}</td></tr>`; }).join("") || `<tr><td colspan="6" class="muted">No orders yet.</td></tr>`}
+        </tbody></table></div>`,
+      talent: `<div class="card tablewrap">${toolbar("talent")}<table><thead><tr><th>Name</th><th>Contact</th><th>Skills</th><th>Rate</th><th>Status</th><th></th></tr></thead><tbody>
+        ${data.talent.map((t) => `<tr data-s="${esc([t.name, t.contact, t.country, t.skills].join(' ').toLowerCase())}"><td><b>${esc(t.name)}</b><div class="muted" style="font-size:.82rem">${esc(t.country || "")}</div></td><td>${esc(t.contact)}</td><td style="max-width:320px">${esc(t.skills)}</td><td>${money(t.rate_usd)}/h</td>
+          <td><span class="tag ${t.status === "active" ? "ok" : "warn"}">${esc(t.status)}</span></td>
+          <td>${t.id_verified ? `<span class="tag ok">ID 18+ ✓</span>` : `<button class="btn btn-primary btn-sm" style="margin:2px" data-idv="${t.id}">Mark ID verified (18+)</button>`}<button class="btn btn-ghost btn-sm" style="margin:2px" data-tt="${t.id}" data-to="${t.status === "active" ? "paused" : "active"}">${t.status === "active" ? "Pause" : "Activate"}</button></td></tr>`).join("") || `<tr><td colspan="6" class="muted">No talent yet.</td></tr>`}
+        </tbody></table></div>`,
+      money: moneyView(),
+      ratings: (() => { const R = data.ratings, avg = R.length ? (R.reduce((s, r) => s + r.stars, 0) / R.length).toFixed(2) : "—";
+        return `<div class="kpis" style="grid-template-columns:repeat(3,1fr)"><div class="card kpi"><div class="lbl">Average rating</div><div class="val">${avg}</div></div>
+          <div class="card kpi"><div class="lbl">Ratings</div><div class="val">${R.length}</div></div><div class="card kpi"><div class="lbl">Comments waiting</div><div class="val">${R.filter((r) => r.comment && !r.approved).length}</div></div></div>
+          <div class="card tablewrap" style="margin-top:14px"><table><thead><tr><th>Stars</th><th>Comment</th><th>Name</th><th>Date</th><th>Public</th></tr></thead><tbody>
+          ${R.map((r) => `<tr><td>${"★".repeat(r.stars)}</td><td style="max-width:420px">${esc(r.comment || "—")}</td><td>${esc(r.name || "—")}</td><td>${new Date(r.created_at).toLocaleDateString()}</td>
+            <td>${r.comment ? `<button class="btn ${r.approved ? "btn-ghost" : "btn-primary"} btn-sm" data-rt="${r.id}" data-to="${!r.approved}">${r.approved ? "Hide" : "Approve"}</button>` : "—"}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">No ratings yet.</td></tr>`}
+          </tbody></table><p class="muted" style="margin:12px 0 0">Only approved comments appear on the website. The average always uses every real rating.</p></div>`; })(),
+      boss: `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div><h3 style="margin:0">AI Boss</h3><p class="muted" style="margin:4px 0 0">${N.LIVE ? "Runs by itself every 5 minutes in the cloud — even when this page is closed." : "In preview, the boss runs a few seconds after each new job."} ${open} job(s) waiting.</p></div>
+          <button class="btn btn-primary" id="runBoss">Run now</button></div>
+          ${(() => { const lim = Number(data.settings.aiDailyLimit || 200), used = data.ai?.today || 0, st = data.settings.aiPaused ? "Paused" : used >= lim ? "Limit reached" : "Running";
+            const chg = window._nAiSt && window._nAiSt !== st; window._nAiSt = st;
+            return `<div class="instr${chg ? " changed" : ""}" data-state="${st}">
+            <div class="instr-cell instr-state"><div class="lbl">AI Boss</div><div class="instr-big">${st}</div>
+              <button class="btn ${data.settings.aiPaused ? "btn-primary" : "btn-ghost"} btn-sm" id="aiPause">${data.settings.aiPaused ? "Resume AI Boss" : "Pause AI Boss"}</button></div>
+            <div class="instr-cell"><div class="lbl">AI calls today</div><div class="instr-big">${used}<span class="muted"> / ${lim}</span></div>
+              <div class="bar" role="img" aria-label="${used} of ${lim} used"><i style="width:${Math.min(100, (used / lim) * 100)}%"></i></div></div>
+            <div class="instr-cell"><div class="lbl">Daily AI limit</div><form id="aiLimF" class="instr-form"><input name="lim" type="number" min="1" max="100000" value="${esc(lim)}" aria-label="Daily AI limit"><button class="btn btn-ghost btn-sm" type="submit">Save</button></form>
+              <div class="muted instr-note">About 5–10 calls per AI job (two AIs and a quality check per round). Above the limit, jobs wait until tomorrow.</div></div>
+            <div class="instr-cell"><div class="lbl">Last run</div><div class="instr-big">${data.ai?.heartbeat ? ago(data.ai.heartbeat) : "—"}</div><div class="muted instr-note">${N.LIVE ? "Should be under 5 min." : "Preview: runs after each new job."}</div></div>
+          </div>`; })()}
+          <form class="form" id="aiSetF" style="margin-top:18px">
+            <h3 style="margin:0">AI first</h3>
+            <label class="check"><input type="checkbox" name="aiFirst" ${S.aiFirst !== false ? "checked" : ""}><span>HURANTEA's AI does every job it can. Experts get the jobs that need a person.</span></label>
+            <label class="check"><input type="checkbox" name="aiReview" ${S.aiReview !== false ? "checked" : ""}><span>I check AI samples and finished work before clients see them <span class="muted">(recommended while the AI is new)</span></span></label>
+            <div><div class="muted" style="font-size:.84rem;margin-bottom:6px">Jobs the AI may do</div><div style="display:flex;gap:6px 18px;flex-wrap:wrap">${Object.entries(KIND).map(([k, n]) => `<label class="check" style="margin:0"><input type="checkbox" name="kind" value="${k}" ${kinds.includes(k) ? "checked" : ""}><span>${n}</span></label>`).join("")}</div></div>
+            <div class="row2"><label>AI price <span class="hint">% of what a person would cost</span><input name="aiPricePct" type="number" min="5" max="100" value="${esc(S.aiPricePct ?? 50)}"></label>
+              <label>Lowest AI price (USD)<input name="aiMinPrice" type="number" min="1" max="1000" value="${esc(S.aiMinPrice ?? 5)}"></label></div>
+            <p class="muted" style="margin:0;font-size:.84rem">Never done by AI: physical work, anything needing logins or the client's accounts, apps with a database, images and video, legal, medical, tax or money advice.</p>
+            <div><button class="btn btn-ghost btn-sm" type="submit">Save AI settings</button></div>
+          </form>
+          <div class="log" style="margin-top:16px">${data.log.map((l) => `<div><span class="muted">${new Date(l.at).toLocaleString()}</span> · ${esc(l.message)}</div>`).join("") || `<div class="muted">No activity yet.</div>`}</div></div>`,
+    };
+    dash.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px"><div><h1 style="font-size:2rem;margin:0">Owner dashboard</h1><p class="muted" style="margin:4px 0 0">Private — only you can see this.</p></div>
+      <span class="pill" style="margin:0"><span class="dot"></span>AI Boss ${N.LIVE ? "running in the background" : "(preview)"}</span></div>
+      <div class="tabs">${[["needs", `Action needed${N_.length ? ` (${N_.length})` : ""}`], ["aiwork", `AI work${Q.length ? ` (${Q.length})` : ""}`], ["ops", "Ops board"], ["human", `Human board${H.filter((k) => k.status !== "done").length ? ` (${H.filter((k) => k.status !== "done").length})` : ""}`], ["profits", "Profits"], ["orders", `Orders & clients (${J.length})`], ["talent", `Talent (${data.talent.length})`], ["money", `Payments & payouts${pendingPayouts().length ? ` (${pendingPayouts().length})` : ""}`], ["ratings", `Ratings (${data.ratings.length})`], ["boss", "AI Boss"], ["history", "History & security"]].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
+      ${views[tab]}`;
+    dash.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; window._nHold = false; draw(); }));
+    dash.querySelectorAll("[data-act]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.id) || {};
+      const patch = { ...ACT[b.dataset.act].patch }; if (j.route === "ai" && b.dataset.act === "release") patch.payout_status = "none";   // AI work: no expert to pay out
+      await api.updateJob(b.dataset.id, patch); toast("Updated"); load(); }));
+    const sf = document.getElementById("setForm");
+    if (sf) sf.onsubmit = async (e) => { e.preventDefault(); const v = Object.fromEntries(new FormData(sf).entries());
+      v.autoPayoutLimit = Number(v.autoPayoutLimit || 0); v.releaseAfterDays = Number(v.releaseAfterDays || 7); v.confirmHours = Math.min(72, Math.max(1, Number(v.confirmHours || 12)));
+      try { await api.saveSettings({ ...data.settings, ...v }); toast("Settings saved"); load(); } catch (err) { toast(err.message); } };
+    dash.querySelectorAll("[data-rt]").forEach((b) => (b.onclick = async () => { await api.updateRating(isNaN(+b.dataset.rt) ? b.dataset.rt : +b.dataset.rt, { approved: b.dataset.to === "true" }); load(); }));
+    dash.querySelectorAll("[data-idv]").forEach((b) => (b.onclick = async () => { if (!confirm("Confirm you checked this person's ID and they are 18 or older?")) return; await api.updateTalent(b.dataset.idv, { id_verified: true }); toast("ID verified — can now get paid jobs"); load(); }));
+    dash.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = () => navigator.clipboard?.writeText(b.dataset.copy).then(() => toast("Link copied — send it to the expert"), () => prompt("Copy this link:", b.dataset.copy))));
+    dash.querySelectorAll("[data-tt]").forEach((b) => (b.onclick = async () => { await api.updateTalent(b.dataset.tt, { status: b.dataset.to }); load(); }));
+    dash.querySelectorAll(".sp-sum").forEach((b) => (b.onclick = () => { const open = b.getAttribute("aria-expanded") !== "true"; b.setAttribute("aria-expanded", String(open)); b.nextElementSibling.hidden = !open; }));
+    const nn = document.getElementById("needNew"); if (nn) nn.onclick = () => load(true);
+    const hm = document.getElementById("histMore"); if (hm) hm.onclick = () => { window._nHistN = (window._nHistN || 100) + 100; draw(); };
+    dash.querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => { tab = b.dataset.go; draw(); }));
+    // search + filter without redrawing (keeps focus), and CSV export of exactly what you see
+    const applyQ = (k) => { const box = dash.querySelector(`[data-q="${k}"]`); if (!box) return; const t = q[k].toLowerCase().trim(), st = q[k + "St"] || "";
+      let n = 0, all = 0; box.closest(".card").querySelectorAll("tbody tr[data-s], .spine li[data-s]").forEach((tr) => { all++; const ok = (!t || tr.dataset.s.includes(t)) && (!st || tr.dataset.st === st); tr.hidden = !ok; if (ok) n++; });
+      const c = dash.querySelector(`[data-count="${k}"]`); if (c) c.textContent = (t || st) ? `${n} of ${all}` : `${all}`; };
+    ["orders", "talent", "history"].forEach(applyQ);
+    dash.querySelectorAll("[data-q]").forEach((i) => (i.oninput = () => { q[i.dataset.q] = i.value; applyQ(i.dataset.q); }));
+    dash.querySelectorAll("[data-qs]").forEach((i) => (i.onchange = () => { q[i.dataset.qs] = i.value; applyQ(i.dataset.qs.replace(/St$/, "")); }));
+    dash.querySelectorAll("[data-csv]").forEach((b) => (b.onclick = () => { const k = b.dataset.csv, t = q[k].toLowerCase().trim(), st = q[k + "St"] || "";
+      const src = k === "orders" ? data.jobs : k === "talent" ? data.talent : data.audit;
+      const rows = src.filter((r) => (!st || r.status === st) && (!t || JSON.stringify(r).toLowerCase().includes(t)));
+      csv(k, k === "orders" ? rows.map((j) => ({ created: j.created_at, title: j.title, status: j.status, client: j.client_name, contact: j.client_contact, expert: j.quote?.talentName || "", price_usd: j.offer_usd, fee_usd: j.quote?.fee, expert_pay_usd: j.quote?.providerPrice, payment: j.payment_status, payout: j.payout_status })) : rows);
+      toast(`Exported ${rows.length} row(s)`); }));
+    // AI controls
+    const ap = document.getElementById("aiPause");
+    if (ap) ap.onclick = async () => { const to = !data.settings.aiPaused; if (to && !confirm("Pause the AI Boss? New jobs will wait until you resume it.")) return;
+      try { await api.saveSettings({ ...data.settings, aiPaused: to }); toast(to ? "AI Boss paused" : "AI Boss running again"); load(true); } catch (e) { toast(e.message); } };
+    const al = document.getElementById("aiLimF");
+    if (al) al.onsubmit = async (e) => { e.preventDefault(); const v = Math.max(1, Math.min(100000, Math.round(Number(al.lim.value) || 200)));
+      try { await api.saveSettings({ ...data.settings, aiDailyLimit: v }); toast(`Daily AI limit: ${v}`); load(true); } catch (err) { toast(err.message); } };
+    // FILES-001 open a client's file (live: a private link valid for one hour)
+    dash.querySelectorAll("[data-jfile]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.jfile), f = j && (j.files || [])[+b.dataset.i]; if (!f) return;
+      let u; try { u = new URL(await api.fileUrl(f), location.href).href; } catch (e) { return toast(e.message); }
+      // shown in a panel on this page (works everywhere, also where new tabs are blocked), plus a new-tab link
+      const img = f.preview ? new URL(f.preview, location.href).href : /^image\//.test(f.type || "") ? u : null, pdf = /pdf/.test(f.type || "") || /\.pdf$/i.test(f.name);
+      let ov = document.getElementById("fileView"); if (!ov) { ov = document.createElement("div"); ov.id = "fileView"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.style.cssText = "position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px"; document.body.appendChild(ov); }
+      ov.innerHTML = `<div class="card" style="width:min(900px,100%);max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"><b>${esc(f.name)}</b><span style="display:flex;gap:8px"><a class="btn btn-ghost btn-sm" href="${esc(u)}" target="_blank" rel="noopener">Open in a new tab</a><button class="btn btn-primary btn-sm" id="fvClose">Close</button></span></div>
+        ${img ? `<img src="${esc(img)}" alt="${esc(f.name)}" style="width:100%;height:auto;border-radius:6px;background:#fff">` : pdf ? `<iframe src="${esc(u)}" title="${esc(f.name)}" style="width:100%;height:70vh;border:0;border-radius:6px;background:#fff"></iframe>` : `<p class="muted">This file type can't be shown here. Use "Open in a new tab" to download it.</p>`}</div>`;
+      ov.hidden = false; ov.style.display = "flex"; const close = () => { ov.style.display = "none"; ov.innerHTML = ""; }; document.getElementById("fvClose").onclick = close; ov.onclick = (ev) => { if (ev.target === ov) close(); }; document.getElementById("fvClose").focus(); }));
+    // PIPE-001 Human board: finish it yourself, mark done, staff, notifications
+    dash.querySelectorAll("[data-owndeliver]").forEach((b) => (b.onclick = async () => { const k = (data.ops || []).find((x) => x.id === b.dataset.owndeliver), j = k && data.jobs.find((x) => x.id === k.job_id);
+      const t = dash.querySelector(`[data-ownwork="${b.dataset.owndeliver}"]`), v = (t && t.value || "").trim(); if (!j || v.length < 2) return toast("Write the finished work first.");
+      if (!confirm("Deliver this to the client now?")) return; b.disabled = true;
+      try { await api.updateJob(j.id, { status: "delivered", ai_work: { ...j.ai_work, final: v, final_at: new Date().toISOString(), final_by: "owner", approved: true, escalated: null } }); await api.updateOpsTask(k.id, { status: "done" }); toast("Delivered to the client"); } catch (e) { toast(e.message); } load(true); }));
+    dash.querySelectorAll("[data-hdone]").forEach((b) => (b.onclick = async () => { try { await api.updateOpsTask(b.dataset.hdone, { status: "done" }); toast("Marked done"); } catch (e) { toast(e.message); } load(true); }));
+    dash.querySelectorAll("[data-staff]").forEach((b) => (b.onclick = async () => { try { await api.updateStaff(b.dataset.staff, { active: b.dataset.to === "true" }); } catch (e) { toast(e.message); } load(true); }));
+    const sf2 = document.getElementById("staffF");
+    if (sf2) sf2.onsubmit = async (e) => { e.preventDefault(); const v = Object.fromEntries(new FormData(sf2).entries());
+      try { const r = await api.addStaff(v.email.trim(), v.name.trim()); toast(r === "added" ? "Added to the team" : "No login with that email yet — create it in Supabase → Authentication → Users first."); if (r === "added") sf2.reset(); } catch (err) { toast(err.message); } load(true); };
+    const po = document.getElementById("pushOwner"); if (po) po.onclick = async () => { try { await N.enablePush(api); toast("Notifications are on for this device."); } catch (e) { toast(e.message); } };
+    // OPS-001 board: department filter, your tasks, copy the brief
+    const qd = dash.querySelector("[data-qdept]"); if (qd) qd.onchange = () => { q.dept = qd.value; draw(); };
+    dash.querySelectorAll("[data-ost]").forEach((sel) => (sel.onchange = async () => { try { await api.updateOpsTask(sel.dataset.ost, { status: sel.value }); toast("Task updated"); } catch (e) { toast(e.message); } load(true); }));
+    const of = document.getElementById("opsF");
+    if (of) of.onsubmit = async (e) => { e.preventDefault(); const v = Object.fromEntries(new FormData(of).entries()); if (!v.title.trim()) return;
+      const b = of.querySelector("button[type=submit]"); b.disabled = true;
+      try { await api.addOpsTask({ title: v.title.trim(), dept: v.dept, priority: v.priority, due: v.due || null, detail: v.detail.trim() || null }); toast("Task added"); of.reset(); } catch (err) { toast(err.message); } b.disabled = false; load(true); };
+    const bc = document.getElementById("briefCopy"); if (bc) bc.onclick = () => navigator.clipboard?.writeText(B.text).then(() => toast("Brief copied"), () => prompt("Copy the brief:", B.text));
+    // STRATEGY-001 AI work: approve, redo, or give it to a person
+    dash.querySelectorAll("[data-aiok]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.aiok); if (!j) return; const w = j.ai_work || {}, q = j.quote || {}; b.disabled = true;
+      try {
+        if (j.status === "ai_check") { const inp = dash.querySelector(`[data-aiprice="${b.dataset.aiok}"]`), price = Math.max(1, Math.round((Number(inp && inp.value) || Number(q.total) || 5) * 100) / 100);
+          await api.updateJob(j.id, { status: "quoted", offer_usd: price, offer_text: w.plan || "HURANTEA's AI will deliver the complete work.", quote: { ...q, total: price, fee: price } }); toast("Sample and price shown to the client"); }
+        else { const fresh = (await api.jobs()).find((x) => String(x.id) === b.dataset.aiok) || j;   // approve exactly the version you read
+          if (String((fresh.ai_work || {}).versions || 1) !== b.dataset.aiv || !(fresh.ai_work || {}).final) { toast("A newer version arrived — please check it first."); load(true); return; }
+          await api.updateJob(j.id, { status: "delivered", ai_work: { ...w, approved: true, approved_at: new Date().toISOString() } }); toast("Delivered to the client"); }
+      } catch (e) { toast(e.message); } load(true); }));
+    dash.querySelectorAll("[data-airedo]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.airedo); if (!j) return; const note = (dash.querySelector(`[data-ainote="${b.dataset.airedo}"]`)?.value || "").trim().slice(0, 500);
+      b.disabled = true; try { await api.updateJob(j.id, { ai_work: { ...j.ai_work, final: null, approved: false, note, fails: 0, escalated: null } }); toast("The AI is making a new version"); } catch (e) { toast(e.message); } load(true); }));
+    dash.querySelectorAll("[data-aihuman]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.aihuman); if (!j || !confirm("Give this job to a human expert? The AI sample is not shown to the client.")) return; b.disabled = true;
+      try { await api.updateJob(j.id, { route: "expert", status: "received", offer_usd: null, quote: null, offer_text: "We are asking a verified expert to take this on.", ai_work: { ...j.ai_work, handover: "owner", handover_at: new Date().toISOString() } }); toast("Sent to the expert flow"); } catch (e) { toast(e.message); } load(true); }));
+    const asf = document.getElementById("aiSetF");
+    if (asf) asf.onsubmit = async (e) => { e.preventDefault(); const fd = new FormData(asf);
+      const v = { aiFirst: !!fd.get("aiFirst"), aiReview: !!fd.get("aiReview"), aiKinds: fd.getAll("kind"), aiPricePct: Math.max(5, Math.min(100, Math.round(Number(fd.get("aiPricePct")) || 50))), aiMinPrice: Math.max(1, Math.min(1000, Number(fd.get("aiMinPrice")) || 5)) };
+      try { await api.saveSettings({ ...data.settings, ...v }); toast("AI settings saved"); load(true); } catch (err) { toast(err.message); } };
+    mfaPanel();
+    const rb = document.getElementById("runBoss");
+    if (rb) rb.onclick = async () => { rb.disabled = true; try { const r = await api.runBoss(); toast(`Boss processed ${r.processed} job(s)`); } catch (e) { toast(e.message); } await load(); };
+  }
+  enter();
+  // signed in or out in another tab, or the session ended → reload so this tab matches
+  const reloadOnce = () => { let last = 0; try { last = +sessionStorage.getItem("hurantea-reload") || 0; } catch {}
+    if (Date.now() - last < 8000) return false; try { sessionStorage.setItem("hurantea-reload", String(Date.now())); } catch {} location.reload(); return true; };   // never a reload loop
+  api.onAuth((ev) => { const inDash = !dash.classList.contains("hidden");
+    if ((ev === "SIGNED_IN" && !inDash) || (ev === "SIGNED_OUT" && inDash)) reloadOnce(); });
+  // coming back to the tab refreshes the numbers right away instead of waiting for the next 20-second tick
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !dash.classList.contains("hidden")) load(); });
+})();
+</script>
+</body>
+</html>

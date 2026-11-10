@@ -1,0 +1,115 @@
+/* HURANTEA FX — collapsing menu + 3D hover text. Monochrome. */
+
+/* ---------- menu bar hides on scroll, ☰ stays ---------- */
+.nav { transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .35s, visibility 0s; }
+body.nav-min .nav { transform: translateY(-140%); opacity: 0; pointer-events: none; visibility: hidden; transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .35s, visibility 0s .5s; }
+.menu-fab { position: fixed; z-index: 90; top: 18px; right: 22px; width: 52px; height: 52px; display: grid; place-content: center; gap: 6px; cursor: pointer;
+  background: var(--panel, rgba(4,4,6,.7)); border: 1px solid var(--line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+  opacity: 0; transform: translateY(-20px) scale(.8); pointer-events: none; transition: opacity .35s, transform .45s cubic-bezier(.2,.8,.2,1); }
+.menu-fab i { display: block; width: 22px; height: 1.6px; background: var(--text); transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .3s, width .3s; }
+.menu-fab i:nth-child(2) { width: 15px; justify-self: end; }
+.menu-fab:hover i:nth-child(2) { width: 22px; }
+body.nav-min .menu-fab, body.mo-open .menu-fab { opacity: 1; transform: none; pointer-events: auto; }
+body.mo-open .menu-fab i:nth-child(1) { transform: translateY(7.6px) rotate(45deg); }
+body.mo-open .menu-fab i:nth-child(2) { opacity: 0; }
+body.mo-open .menu-fab i:nth-child(3) { transform: translateY(-7.6px) rotate(-45deg); }
+[dir="rtl"] .menu-fab { right: auto; left: 22px; }
+html[data-theme="light-legacy"] .menu-fab { --panel: rgba(255,255,255,.88); --text: #0a0a0a; --line: rgba(0,0,0,.18); }
+@media (prefers-color-scheme: light) { html[data-theme="auto-legacy"] .menu-fab { --panel: rgba(255,255,255,.88); --text: #0a0a0a; --line: rgba(0,0,0,.18); } }
+@media (max-width: 820px) { .menu-fab { top: 12px; right: 12px; width: 46px; height: 46px; } }
+
+/* full-screen menu */
+.menu-overlay { position: fixed; inset: 0; z-index: 85; display: grid; place-items: center; background: rgba(0,0,0,.72); -webkit-backdrop-filter: blur(22px) saturate(120%); backdrop-filter: blur(22px) saturate(120%);
+  opacity: 0; transition: opacity .4s; perspective: 1200px; }
+.menu-overlay.on { opacity: 1; }
+.mo-inner { width: min(980px, calc(100vw - 40px)); transform: translate3d(0, 30px, -200px) rotateX(18deg); transition: transform .6s cubic-bezier(.2,.8,.2,1); color: #f4f4f4; }
+.menu-overlay.on .mo-inner { transform: none; }
+.mo-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,.16); padding-bottom: 14px; }
+.mo-x { background: none; border: 1px solid rgba(255,255,255,.2); color: #fff; width: 44px; height: 44px; font-size: 1.5rem; cursor: pointer; }
+.mo-links { display: grid; margin: 10px 0 24px; }
+.mo-links a { display: flex; align-items: baseline; gap: 22px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); color: #f4f4f4 !important; text-decoration: none !important;
+  opacity: 0; transform: translateX(-30px); transition: opacity .5s, transform .6s cubic-bezier(.2,.8,.2,1), padding .3s; }
+.menu-overlay.on .mo-links a { opacity: 1; transform: none; }
+.menu-overlay.on .mo-links a:nth-child(2) { transition-delay: .05s; } .menu-overlay.on .mo-links a:nth-child(3) { transition-delay: .1s; }
+.menu-overlay.on .mo-links a:nth-child(4) { transition-delay: .15s; } .menu-overlay.on .mo-links a:nth-child(5) { transition-delay: .2s; }
+.mo-n { font: 500 .8rem/1 var(--mono); color: #8a8a8a; letter-spacing: .14em; }
+.mo-t { font: 600 clamp(2rem, 6vw, 4.4rem)/1.05 var(--display); letter-spacing: -.045em; }
+.mo-links a:hover { padding-inline-start: 18px; }
+.mo-links a.on .mo-t { color: transparent; -webkit-text-stroke: 1.2px #fff; }
+.mo-foot { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font: 500 .74rem/1 var(--mono); text-transform: uppercase; letter-spacing: .14em; }
+.mo-foot a:not(.btn), .mo-set { color: #a3a3a3 !important; background: none; border: 0; cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; padding: 6px 0; }
+.mo-foot a:not(.btn):hover, .mo-set:hover { color: #fff !important; }
+.mo-foot .btn { margin-inline-start: auto; color: #000 !important; background: #fff !important; }
+body.mo-open { overflow: hidden; }
+html[data-motion="off"] :is(.mo-inner, .mo-links a, .nav, .menu-fab) { transition: none !important; }
+
+/* ---------- 3D letters (assets/fx.js splits Latin headlines) ---------- */
+.fx-split { perspective: 700px; }
+.fx-w { display: inline-block; white-space: nowrap; transform-style: preserve-3d; }
+.fx-l { display: inline-block; transform-style: preserve-3d; transition: transform .35s cubic-bezier(.2,.8,.2,1), text-shadow .35s, color .3s; will-change: transform; }
+.os-title .grad .fx-l { -webkit-text-stroke: inherit; }
+/* scripts that can't be split (Arabic, Bengali, Hindi, Urdu, Chinese…): the whole line lifts in 3D */
+@media (hover: hover) and (pointer: fine) {
+  html:not([data-motion="off"]) :is(.os-title, .section-head h2, .sstep h2, .page-head h1, .legal h1, .tile h3):not(.fx-split) { transition: transform .4s cubic-bezier(.2,.8,.2,1), text-shadow .4s; }
+  html:not([data-motion="off"]) :is(.os-title, .section-head h2, .sstep h2, .page-head h1, .legal h1, .tile h3):not(.fx-split):hover {
+    transform: perspective(700px) translateZ(26px) rotateX(10deg); text-shadow: 0 1px 0 #777, 0 2px 0 #555, 0 3px 0 #333, 0 16px 30px rgba(0,0,0,.8), 0 0 30px rgba(255,255,255,.25); }
+
+  /* body text: a soft light follows the pointer and the line lifts a little off the page */
+  html:not([data-motion="off"]) :is(p, li, .lead, summary):hover {
+    transform: perspective(800px) translateZ(6px); text-shadow: 0 0 18px rgba(255,255,255,.18), 0 6px 14px rgba(0,0,0,.5);
+  }
+  :is(p, li, .lead, summary) { transition: transform .3s cubic-bezier(.2,.8,.2,1), text-shadow .3s, color .3s; }
+  html:not([data-motion="off"]) :is(p, .lead, li):hover { color: var(--text); }
+
+  /* links: a light sweep runs through the word and an underline draws in */
+  html:not([data-motion="off"]) :is(main, footer, .mo-foot, .legal) a:not(.btn):not(.tile):not(.card):not(.logo) {
+    background-image: linear-gradient(currentColor, currentColor); background-size: 0 1px; background-repeat: no-repeat; background-position: 0 100%;
+    transition: background-size .35s cubic-bezier(.2,.8,.2,1), text-shadow .3s; text-decoration: none !important; }
+  html:not([data-motion="off"]) :is(main, footer, .mo-foot, .legal) a:not(.btn):not(.tile):not(.card):not(.logo):hover {
+    background-size: 100% 1px; text-shadow: 0 0 14px rgba(255,255,255,.55); animation: linkFlicker .5s steps(2) 1; }
+  @keyframes linkFlicker { 0% { opacity: .55; } 30% { opacity: 1; } 55% { opacity: .75; } 100% { opacity: 1; } }
+
+  /* nav + chips + buttons: monochrome "charge-up" */
+  .nav .links a:hover, .chip:hover, .tile-cta:hover { text-shadow: 0 0 12px rgba(255,255,255,.7); }
+  .nav .links a, .tile-cta { transition: text-shadow .3s; }
+  .btn:hover { transform: translateY(-2px); filter: drop-shadow(0 10px 20px rgba(255,255,255,.22)); }
+
+}
+@media (prefers-reduced-motion: reduce) { .fx-l, .mo-inner, .mo-links a { transition: none !important; } }
+.menu-overlay[hidden] { display: none !important; }
+
+
+/* "meaning focus" (ChatGPT DESIGN-010): pointing at a brief item lights up the estimate it changes — works with keyboard focus too */
+.spatial:has(.node:hover, .node:focus-visible) :is(.s2, .s3) { border-color: color-mix(in srgb, var(--text) 70%, transparent) !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 30%, transparent), 0 0 40px -10px rgba(255,255,255,.35) !important; }
+.spatial:has(.node:hover, .node:focus-visible) :is(.s2, .s3) .scard-k::after { content: " · " attr(data-aff); opacity: .8; }
+.spatial:has(.node:hover, .node:focus-visible) .scard.s1 .node:not(:hover):not(:focus-visible) { opacity: .45; }
+.node { transition: opacity .25s, background .25s, color .25s; }
+
+/* ---------- autocomplete (assets/suggest.js) ---------- */
+.sg-wrap { position: relative; }
+.sg-wrap input { padding-inline-end: 42px; }
+.sg-btn { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: grid; place-items: center; background: none; border: 0; color: var(--muted); cursor: pointer; }
+.sg-wrap.open .sg-btn svg { transform: rotate(180deg); }
+.sg-list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 6px); max-height: 280px; overflow: auto; margin: 0; padding: 6px; list-style: none;
+  background: #08080a; border: 1px solid var(--line); box-shadow: 0 24px 60px -20px rgba(0,0,0,.9); color: #f4f4f4; font-size: .95rem; }
+.sg-list li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; cursor: pointer; }
+.sg-list li small { font: 500 .68rem/1 var(--mono); color: #8a8a8a; letter-spacing: .1em; align-self: center; }
+/* DIAG-047: soft highlight instead of a glaring white block; touch never leaves a stuck "hover" */
+.sg-list li[aria-selected="true"] { background: rgba(255,255,255,.12); color: #fff; box-shadow: inset 2px 0 0 #fff; }
+.sg-list li[aria-selected="true"] small { color: #cfcfcf; }
+@media (hover: hover) and (pointer: fine) { .sg-list li:hover { background: rgba(255,255,255,.08); color: #fff; } .sg-list li:hover small { color: #cfcfcf; } }
+.sg-list { max-height: min(280px, 42vh); }
+.sg-list .sg-none { color: #9a9a9a; cursor: default; }
+.sg-list .sg-none:hover { background: none; color: #9a9a9a; }
+html[data-theme="light-legacy"] .sg-list { background: #e5e3de; color: #1c1c1c; }
+html[data-theme="light-legacy"] .sg-list li[aria-selected="true"] { background: rgba(0,0,0,.08); color: #0a0a0a; box-shadow: inset 2px 0 0 #0a0a0a; }
+@media (hover: hover) and (pointer: fine) { html[data-theme="light-legacy"] .sg-list li:hover { background: rgba(0,0,0,.05); color: #0a0a0a; } }
+
+.mo-title { background: none; border: 0; padding: 8px 0; cursor: pointer; color: inherit; }
+.mo-title:hover .eyebrow { color: #fff; }
+.mo-x { display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; padding: 0 14px; font: 500 .74rem/1 var(--mono) !important; letter-spacing: .14em; text-transform: uppercase; }
+.mo-x:hover { background: #fff; color: #000; }
+body.mo-open .menu-fab { opacity: 0 !important; pointer-events: none !important; }   /* one clear Close button instead of two × */
+.menu-overlay { cursor: zoom-out; } .mo-links a, .mo-foot a, .mo-foot button, .bbar, .mo-x, .mo-title { cursor: pointer; }
+html[data-theme="light-legacy"] .sg-list li[aria-selected="true"] small, html[data-theme="light-legacy"] .sg-list li:hover small { color: #555; }

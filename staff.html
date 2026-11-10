@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" style="background:#000">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<title>Staff · HURANTEA</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg"><link rel="apple-touch-icon" href="assets/logo-512.png">
+<script>try{var d=document.documentElement;d.setAttribute("data-theme",JSON.parse(localStorage.getItem("hurantea-theme"))||"dark");d.dataset.motion=JSON.parse(localStorage.getItem("hurantea-motion"))||"on";var bb=JSON.parse(localStorage.getItem("hurantea-bright"));if(typeof bb!=="number")bb=50;if(bb>=10&&bb<100){var kk=(100-bb)/100;d.style.setProperty("--dim",(kk*.35).toFixed(3));d.style.setProperty("--scene-dim",(kk*.85).toFixed(3))}}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/hud.css">
+<style>.hud-ret, .hud-br, .hud-scene { display: none !important; } canvas.cosmos { opacity: .35; }
+  .hb { display: grid; gap: 12px; } .hb pre { white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; margin: 6px 0 0; font-size: .86rem; line-height: 1.55; }
+  #board [hidden] { display: none !important; }</style>
+<link rel="stylesheet" href="assets/space3d.css">
+</head>
+<body>
+<!-- PIPE-001 company internal: the Human board for HURANTEA staff. Not linked from the public site. -->
+<div id="ribbon" class="preview-ribbon hidden">Preview mode — sample data only. Connect the database to go live.</div>
+<nav class="nav"><div class="wrap">
+  <span class="logo"><span class="logo-mark" style="background:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;padding:0 !important;width:34px;height:34px;filter:drop-shadow(0 0 6px rgba(198,161,91,.25))"><img src="assets/logo-mark.svg" alt="" width="34" height="34" style="display:block;width:100%;height:100%"></span>HURANTEA <span class="tag" style="margin-left:6px">Staff</span></span>
+  <div class="nav-right"><div class="theme" id="theme"></div><button class="btn btn-ghost btn-sm hidden" id="out">Sign out</button></div>
+</div></nav>
+<main class="wrap page" id="app">
+  <div class="card" id="login" style="max-width:420px;margin:40px auto">
+    <h2>Staff sign-in</h2><p class="muted">For the HURANTEA team. Jobs that need a person appear here.</p>
+    <form class="form" id="lf">
+      <label>Email<input name="email" type="email" required autocomplete="username"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn btn-primary" type="submit">Sign in</button>
+    </form>
+  </div>
+  <div id="board" class="hidden"></div>
+</main>
+<script>window.HURANTEA_STAFF_PAGE = true;</script>
+<script src="config.js"></script>
+<script src="assets/bright.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/universe.js"></script>
+<script src="assets/cosmos.js"></script>
+<script src="assets/hud.js"></script>
+<script>
+(function () {
+  const { api, esc, toast } = N;
+  N.mountThemeMenu(document.getElementById("theme"));
+  if (!N.LIVE) document.getElementById("ribbon").classList.remove("hidden");
+  const login = document.getElementById("login"), board = document.getElementById("board"), out = document.getElementById("out");
+  const busy = () => { const a = document.activeElement; return !!(a && board.contains(a) && /^(TEXTAREA|INPUT)$/.test(a.tagName)) || [...board.querySelectorAll("textarea")].some((t) => t.value.trim()); };
+
+  async function enter() {
+    try {
+      if (!(await api.session())) return;
+      if (!(await api.isStaff())) { toast("This account is not on the HURANTEA team."); await api.signOut(); return; }
+      login.classList.add("hidden"); board.classList.remove("hidden"); out.classList.remove("hidden");
+      await draw(); clearInterval(window._sLoad); window._sLoad = setInterval(() => { if (!busy() && !document.hidden) draw(); }, 30000);
+    } catch (e) { toast(e.message); }
+  }
+  document.getElementById("lf").onsubmit = async (e) => { e.preventDefault(); const f = e.target;
+    try { await api.signIn(f.email.value.trim(), f.password.value); await enter(); } catch (err) { toast(err.message || "Sign-in failed"); } };
+  out.onclick = async () => { await api.signOut(); location.reload(); };
+
+  async function draw() {
+    let T = []; try { T = await api.staffBoard(); } catch (e) { toast(e.message); }
+    const pri = { p0: ["P0 urgent", "bad"], p1: ["P1 today", "warn"], p2: ["P2", ""] };
+    board.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px"><div><h1 style="font-size:2rem;margin:0">Human board</h1>
+        <p class="muted" style="margin:4px 0 0">Jobs the AI could not finish and no expert could take. Take one, finish it, deliver it.</p></div>
+        <button class="btn btn-ghost btn-sm" id="pushOn">Turn on notifications on this device</button></div>
+      <div class="hb" style="margin-top:16px">${T.length ? T.map((t) => `<div class="card">
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag ${pri[t.priority]?.[1] || ""}">${pri[t.priority]?.[0] || t.priority}</span>${t.mine ? `<span class="tag ok">Yours</span>` : `<span class="tag">Open</span>`}${t.kind ? `<span class="tag">${esc(t.kind)}</span>` : ""}</div>
+        <h3 style="margin:10px 0 4px">${esc(t.job_title || t.title)}</h3>
+        <div class="muted" style="font-size:.84rem">${t.client_name ? `For ${esc(t.client_name)} · ` : ""}${new Date(t.created_at).toLocaleString()}${t.job_deadline ? ` · Deadline: ${esc(t.job_deadline)}` : ""}</div>
+        <div style="margin:14px 0 2px;font-weight:600">The job: everything the client sent</div><pre style="border-left:2px solid var(--line, rgba(255,255,255,.2));padding-left:10px">${esc(t.job_details || "")}</pre>
+        ${(t.files || []).length ? `<div style="margin:14px 0 4px;font-weight:600">Files from the client (${t.files.length})</div><div style="display:flex;gap:8px;flex-wrap:wrap">${t.files.map((f, i) => `<button class="btn btn-ghost btn-sm" data-file="${t.task_id}" data-i="${i}">Open ${esc(f.name)}</button>`).join("")}</div><div data-view="${t.task_id}" hidden style="margin-top:10px"></div>` : `<div class="muted" style="margin:12px 0 0;font-size:.84rem">No files attached.</div>`}
+        ${t.plan ? `<div class="muted" style="margin:12px 0 2px;font-size:.84rem">What was promised</div><div style="font-size:.9rem">${esc(t.plan)}</div>` : ""}
+        ${t.detail ? `<div class="muted" style="margin:12px 0 2px;font-size:.84rem">Why it is here</div><div style="font-size:.9rem">${esc(t.detail)}</div>` : ""}
+        ${!t.mine ? `<div class="cta-row" style="margin-top:12px"><button class="btn btn-primary btn-sm" data-take="${t.task_id}">Take this job</button></div><p class="muted" style="margin:6px 0 0;font-size:.84rem">Take it first. Then a box opens here where you write or paste the finished work and deliver it.</p>`
+          : t.paid === false ? `<p class="muted" style="margin:12px 0 0">Not paid yet. The owner makes the client an offer first; you'll see it here again when it's paid.</p>`
+          : `<label style="display:block;margin-top:12px">The finished work<textarea data-work="${t.task_id}" maxlength="200000" style="min-height:160px" placeholder="Paste or write the complete work for the client"></textarea></label>
+             <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-deliver="${t.task_id}">Deliver</button></div>`}
+      </div>`).join("") : `<div class="card"><b>Nothing waiting right now.</b><div class="muted">When a job needs a person, it appears here and you get a notification.</div></div>`}</div>`;
+    // files open right here on the page (works everywhere, also where new tabs are blocked), plus a new-tab link
+    board.querySelectorAll("[data-file]").forEach((b) => (b.onclick = async () => { const t = T.find((x) => x.task_id === b.dataset.file), f = t && t.files[+b.dataset.i]; if (!f) return;
+      const box = board.querySelector(`[data-view="${t.task_id}"]`); if (!box) return;
+      if (box.dataset.open === b.dataset.i && !box.hidden) { box.hidden = true; box.innerHTML = ""; return; }
+      let u; try { u = new URL(await api.fileUrl(f), location.href).href; } catch (e) { return toast(e.message); }
+      const img = f.preview ? new URL(f.preview, location.href).href : /^image\//.test(f.type || "") ? u : null, pdf = /pdf/.test(f.type || "") || /\.pdf$/i.test(f.name);
+      box.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b>${esc(f.name)}</b><span style="display:flex;gap:8px"><a class="btn btn-ghost btn-sm" href="${esc(u)}" target="_blank" rel="noopener">Open in a new tab</a><button class="btn btn-ghost btn-sm" data-close>Close</button></span></div>
+        ${img ? `<img src="${esc(img)}" alt="${esc(f.name)}" style="width:100%;height:auto;border-radius:6px;background:#fff">` : pdf ? `<iframe src="${esc(u)}" title="${esc(f.name)}" style="width:100%;height:560px;border:0;border-radius:6px;background:#fff"></iframe>` : `<p class="muted">This file type can't be shown here. Use "Open in a new tab" to download it.</p>`}`;
+      box.hidden = false; box.dataset.open = b.dataset.i; box.querySelector("[data-close]").onclick = () => { box.hidden = true; box.innerHTML = ""; }; box.scrollIntoView({ behavior: "smooth", block: "nearest" }); }));
+    board.querySelectorAll("[data-take]").forEach((b) => (b.onclick = async () => { b.disabled = true;
+      try { const r = await api.staffTake(b.dataset.take); toast(r === "taken" ? "It's yours now." : "Someone else took it."); } catch (e) { toast(e.message); } draw(); }));
+    board.querySelectorAll("[data-deliver]").forEach((b) => (b.onclick = async () => { const t = board.querySelector(`[data-work="${b.dataset.deliver}"]`), v = (t && t.value || "").trim();
+      if (v.length < 2) { t && t.focus(); return toast("Write the finished work first."); } if (!confirm("Deliver this work? The owner checks it before the client gets it, if that check is on.")) return; b.disabled = true;
+      try { const r = await api.staffDeliver(b.dataset.deliver, v); toast({ delivered: "Delivered to the client.", waiting_owner: "Sent to the owner's check.", not_paid: "This job isn't paid yet.", not_yours: "This job isn't yours anymore.", empty: "Write the finished work first." }[r] || "Done."); } catch (e) { toast(e.message); b.disabled = false; return; }
+      t.value = ""; draw(); }));
+    const po = document.getElementById("pushOn"); if (po) po.onclick = async () => { try { await N.enablePush(api); toast("Notifications are on for this device."); } catch (e) { toast(e.message); } };
+  }
+  enter();
+})();
+</script>
+</body>
+</html>

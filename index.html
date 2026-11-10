@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" style="background:#000">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HURANTEA — Get work done by AI, or by a verified expert when a person is needed</title>
+<meta name="description" content="Post any digital job. HURANTEA's AI does it itself when it can, with a free sample and a fixed price, and brings in a verified expert when a person is needed. Freelancers worldwide can join free.">
+<meta name="theme-color" content="#f7f8fb">
+<meta property="og:title" content="HURANTEA — Describe it. AI does the rest.">
+<meta property="og:description" content="Post a job. AI does it first, with a free sample and a fixed price, and a verified expert takes over when a person is needed. Free Academy for every age.">
+<link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg"><link rel="apple-touch-icon" href="assets/logo-512.png">
+<script>try{var d=document.documentElement;d.classList.add("js-reveal");setTimeout(function(){if(!window.NMotion)d.classList.remove("js-reveal")},2500);d.setAttribute("data-theme",JSON.parse(localStorage.getItem("hurantea-theme"))||"dark");d.dataset.motion=JSON.parse(localStorage.getItem("hurantea-motion"))||"on";var bb=JSON.parse(localStorage.getItem("hurantea-bright"));if(typeof bb!=="number")bb=50;if(bb>=10&&bb<100){var kk=(100-bb)/100;d.style.setProperty("--dim",(kk*.35).toFixed(3));d.style.setProperty("--scene-dim",(kk*.85).toFixed(3))}var l=JSON.parse(localStorage.getItem("hurantea-lang"));if(/^(ar|bn|hi|ur|zh|es|fr|pt|id)$/.test(l)){d.lang=l;d.dir=(l==="ar"||l==="ur")?"rtl":"ltr";document.write('<script src="assets/lang/'+l+'.js"><\/script>')}else if(l&&l!=="en"&&/^[a-z]{2,3}(-[A-Z]{2})?$/.test(l)){d.lang=l;d.dir=/^(fa|he|ps)$/.test(l)?"rtl":"ltr";var c=localStorage.getItem("hurantea-pack-"+l);if(c)window.HURANTEA_LANG={code:l,dir:d.dir,dict:JSON.parse(c),pat:[]}}}catch(e){}</script>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/hud.css">
+<link rel="stylesheet" href="assets/space3d.css">
+<link rel="stylesheet" href="assets/fx.css">
+</head>
+<body>
+<a class="skip" href="#app">Skip to content</a>
+<div id="ribbon" class="preview-ribbon hidden">Preview mode — sample data only. Connect the database to go live.</div>
+
+<nav class="nav">
+  <div class="wrap">
+    <a href="#/" class="logo" aria-label="HURANTEA home"><span class="logo-mark" style="background:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;padding:0 !important;width:34px;height:34px;filter:drop-shadow(0 0 6px rgba(198,161,91,.25))"><img src="assets/logo-mark.svg" alt="" width="34" height="34" style="display:block;width:100%;height:100%"></span>HURANTEA</a>
+    <div class="links" id="links">
+      <a href="#/post" data-r="post">Hire an expert</a>
+      <a href="#/earn" data-r="earn">Earn with your skills</a>
+      <a href="#/academy" data-r="academy">Academy</a>
+      <a href="#/track" data-r="track">My requests</a>
+    </div>
+    <div class="nav-right">
+      <div class="theme" id="theme"></div>
+      <a href="#/post" class="btn btn-primary btn-sm nav-cta">Post a job</a>
+      <button class="btn btn-ghost icon-btn burger" id="burger" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<button class="menu-fab" id="menuFab" type="button" aria-label="Menu" aria-expanded="false" aria-controls="menuOverlay"><i></i><i></i><i></i></button>
+<div class="menu-overlay" id="menuOverlay" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="mo-inner">
+    <div class="mo-head"><button class="mo-title" id="menuTitle" type="button" aria-label="Close menu"><span class="eyebrow">Menu</span></button><button class="mo-x" id="menuX" type="button"><span>Close</span> ×</button></div>
+    <nav class="mo-links">
+      <a href="#/" data-r="home"><span class="mo-n">01</span><span class="mo-t">Home</span></a>
+      <a href="#/post" data-r="post"><span class="mo-n">02</span><span class="mo-t">Hire an expert</span></a>
+      <a href="#/earn" data-r="earn"><span class="mo-n">03</span><span class="mo-t">Earn with your skills</span></a>
+      <a href="#/academy" data-r="academy"><span class="mo-n">04</span><span class="mo-t">Academy</span></a>
+      <a href="#/track" data-r="track"><span class="mo-n">05</span><span class="mo-t">My requests</span></a>
+    </nav>
+    <div class="mo-bright"><span class="eyebrow">Brightness</span><div data-bright-bar></div></div>
+    <div class="mo-foot"><a href="#/payments">Payments & payouts</a><a href="#/terms">Terms of Use</a><a href="#/privacy">Privacy Policy</a><button type="button" class="mo-set" id="menuSettings">Settings</button><a href="#/post" class="btn btn-primary">Post a job</a></div>
+  </div>
+</div>
+<div id="stage" class="stage off" aria-hidden="true"></div>
+<main id="app" tabindex="-1"></main>
+<nav class="dock" aria-label="Quick menu">
+  <a href="#/" data-r="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+  <a href="#/post" data-r="post"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Hire</span></a>
+  <a href="#/earn" data-r="earn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10.5c0-1 1-1.6 2.5-1.6s2.5.6 2.5 1.6-1 1.4-2.5 1.5-2.5.6-2.5 1.6 1 1.6 2.5 1.6 2.5-.6 2.5-1.6"/></svg><span>Earn</span></a>
+  <a href="#/academy" data-r="academy"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg><span>Academy</span></a>
+  <a href="#/track" data-r="track"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/></svg><span>Requests</span></a>
+</nav>
+
+<footer>
+  <div class="floor" aria-hidden="true"></div><div class="wordmark" aria-hidden="true" data-no-i18n>HURANTEA</div>
+  <div class="wrap">
+    <div>
+      <a href="#/" class="logo" style="margin-bottom:8px"><span class="logo-mark" style="background:none !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;padding:0 !important;width:34px;height:34px;filter:drop-shadow(0 0 6px rgba(198,161,91,.25))"><img src="assets/logo-mark.svg" alt="" width="34" height="34" style="display:block;width:100%;height:100%"></span>HURANTEA</a>
+      <p class="muted" style="max-width:420px;margin:10px 0 0;font-size:.88rem">HURANTEA is an AI-run marketplace that connects people who need digital work with verified freelancers worldwide.</p>
+      <div id="contactLine" class="hidden" style="margin-top:8px"></div>
+    </div>
+    <div>
+      <a href="#/post">Hire</a><a href="#/earn">Earn</a><a href="#/academy">Academy</a>
+      <a href="#/payments">Payments</a><a href="#/terms">Terms of Use</a><a href="#/privacy">Privacy Policy</a>
+      <div style="margin-top:8px">© <span id="yr"></span> HURANTEA</div>
+    </div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
+
+<script src="config.js"></script>
+<script src="assets/bright.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/universe.js"></script>
+<script src="assets/cosmos.js"></script>
+<script src="assets/hud.js"></script>
+<script src="assets/fx.js"></script>
+<script src="assets/suggest.js"></script>
+<script src="assets/motion.js"></script>
+<script src="assets/core3d.js"></script>
+<script src="assets/estimate.js"></script>
+<script src="assets/legal.js"></script>
+<script>
+(function () {
+  const { api, esc, money, toast, STATUS, STEPS, store, FEE } = N;
+  const app = document.getElementById("app");
+  document.getElementById("yr").textContent = new Date().getFullYear();
+  { const cl = document.getElementById("contactLine"), bits = [];
+    if (N.C.contactEmail) bits.push(`<a href="mailto:${esc(N.C.contactEmail)}">Contact us</a> · <span data-no-i18n>${esc(N.C.contactEmail)}</span>`, `<a href="mailto:${esc(N.C.contactEmail)}?subject=Report">Report a problem</a>`);
+    if (N.C.operatorName) bits.push(`<span>Operated by</span> <span data-no-i18n>${esc(N.C.operatorName)}</span>`);
+    if (bits.length) { cl.classList.remove("hidden"); cl.innerHTML = bits.join(" · "); } }
+  N.mountThemeMenu(document.getElementById("theme"), [
+    ["#/payments", N.ICONS.card, "Payments & payouts"],
+    ["#/payments#safety", N.ICONS.shield, "Safety & verification"],
+    ["#/track", N.ICONS.wallet, "My requests"],
+    ["#/terms", N.ICONS.shield, "Terms of Use"],
+    ["#/privacy", N.ICONS.shield, "Privacy Policy"],
+  ]);
+  if (!N.LIVE && !sessionStorage.getItem("nr-x")) { const rb = document.getElementById("ribbon"); document.querySelector("footer").before(rb); rb.classList.remove("hidden"); rb.title = "Close"; rb.style.cursor = "pointer"; rb.onclick = () => { rb.classList.add("hidden"); try { sessionStorage.setItem("nr-x", "1"); } catch {} }; }
+  const links = document.getElementById("links");
+  document.getElementById("burger").onclick = () => links.classList.toggle("open");
+
+  const myCodes = () => store.get("hurantea-requests", []);
+  const addCode = (token, title) => store.set("hurantea-requests", [{ token, title, at: Date.now() }, ...myCodes().filter((x) => x.token !== token)].slice(0, 30));
+
+  // ---------- pages ----------
+  const pages = {
+    home() {
+      const chips = ["Website for my shop", "Logo for my brand", "Translate my menu", "Edit my YouTube video", "Excel sales report"];
+      return `
+      <section class="os-hero" id="osHero">
+        <div class="wrap os-grid">
+          <div class="os-copy">
+            <div class="pill"><span class="dot"></span>${N.LIVE ? "AI Core online" : "Preview · sample data"}</div>
+            <h1 class="os-title">Describe it.<br><span class="grad">AI does the rest.</span></h1>
+            <p class="lead">Type any job in any language. HURANTEA's AI Core does it itself when it can, with a free sample and a fixed price. When a person is needed, it matches one verified expert.</p>
+            <label for="cmdText" class="cmd-label">What do you need done?</label>
+            <form class="command" id="cmd" autocomplete="off">
+              <span class="cmd-glow" aria-hidden="true"></span>
+              <textarea id="cmdText" rows="1" maxlength="600" placeholder="e.g. Build a website for my bakery with an online shop"></textarea>
+              <button class="cmd-go" type="submit" aria-label="Get my fixed offer"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </form>
+            <div class="chips">${chips.map((c) => `<button type="button" class="chip" data-chip="${c}">${c}</button>`).join("")}</div>
+          </div>
+          <div class="spatial" id="spatial" aria-live="polite"></div>
+        </div>
+        <a href="#osStory" class="scroll-cue" aria-label="See how it works"><span></span></a>
+      </section>
+
+      <section class="os-story" id="osStory">
+        <div class="story-pin">
+          <div class="wrap story-grid">
+            <div class="story-steps">
+              <div class="sstep" data-s="0"><span class="eyebrow">01</span><h2>Your request becomes a star</h2><p>The AI Core reads what you wrote — in any language — and turns it into a clear brief.</p></div>
+              <div class="sstep" data-s="1"><span class="eyebrow">02</span><h2>AI tries first</h2><p>Writing, translation, simple websites, spreadsheets, research: if the AI can do it well, it makes a free sample and a fixed price, faster and cheaper.</p></div>
+              <div class="sstep" data-s="2"><span class="eyebrow">03</span><h2>One line. One expert.</h2><p>When it needs a person, the AI scans a universe of verified talent and one expert confirms a fixed price. No bidding, no guessing.</p></div>
+              <div class="sstep" data-s="3"><span class="eyebrow">04</span><h2>Accept, relax, receive</h2><p>Your money is held safely until you get the work. Every AI result is checked before you receive it.</p>${N.LIVE ? "" : `<p class="muted preview-note">Preview: payments are not connected yet.</p>`}</div>
+            </div>
+            <div class="story-meter" aria-hidden="true"><i></i></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bento-sec"><div class="wrap">
+        <div class="section-head reveal"><span class="eyebrow">One platform</span><h2>Everything in one living system</h2></div>
+        <div class="bento">
+          <a class="tile t-client card reveal" href="#/post"><span class="tag">For clients</span><h3>AI first, experts when needed</h3><p class="muted">Free sample, one fixed price. Pay only when you accept.</p><div class="ex-offer" aria-hidden="true"><div class="ex-row"><span class="tag">Example</span><span class="tag ok">Offer ready</span></div><b>Logo for my brand</b><div class="ex-row"><span class="avatar" style="background:#0ea5a4;width:28px;height:28px;font-size:.7rem">MS</span><span class="muted">Expert matched ✓</span></div><div class="ex-row ex-price"><span class="muted">Fixed price</span><b>$85.00</b></div></div><span class="tile-cta">Post a job →</span></a>
+          <a class="tile t-talent card reveal" data-delay="80" href="#/earn"><span class="tag ok">For talent</span><h3>Earn from anywhere</h3><p class="muted">Your rate, paid in full. You get the work that needs a real person.</p><span class="tile-cta">Join as a freelancer →</span><div class="viz viz-orbit" aria-hidden="true"><i></i><i></i><i></i></div></a>
+          <a class="tile t-academy card reveal" data-delay="160" href="#/academy"><span class="tag warn">Academy</span><h3>Learn free, any age</h3><p class="muted">A personal AI tutor with step-by-step plans.</p><span class="tile-cta">Start learning →</span></a>
+          <a class="tile t-safe card reveal" href="#/payments#safety"><span class="tag">Safety</span><h3>Verified & protected</h3><p class="muted">ID + 18+ checks, AI-screened jobs, AI work checked, money held until delivery.</p><div class="viz viz-shield" aria-hidden="true"></div></a>
+          <a class="tile t-pay card reveal" data-delay="80" href="#/payments"><span class="tag">Payments</span><h3>Transparent price</h3><p class="muted">AI jobs: one fixed price. Expert jobs: expert pay + 15% fee.</p><span class="tile-cta">How payments work →</span></a>
+          <div class="tile t-lang card reveal" data-delay="160"><span class="tag">Languages</span><h3>Speaks your language</h3><p class="muted">Use HURANTEA in 10 languages — more coming with AI translation.</p><div class="viz viz-lang" aria-hidden="true" data-no-i18n><span>English</span><span>العربية</span><span>বাংলা</span><span>हिन्दी</span><span>中文</span><span>Español</span></div></div>
+        </div>
+      </div></section>
+
+      <section class="rate-sec" id="rate"><div class="wrap rate-grid">
+        <div class="reveal"><span class="eyebrow">Website experience</span><h2>Rate your HURANTEA experience</h2><p class="muted">Real ratings from real visitors only. We publish genuine comments — positive or negative — and only remove spam or abuse. Verified job reviews will appear after completed jobs.</p><div id="rateSummary" class="rate-summary"></div></div>
+        <form class="card form reveal" id="rateForm" data-delay="80">
+          <div class="stars" id="stars" role="radiogroup" aria-label="Your rating">${[1, 2, 3, 4, 5].map((n) => `<button type="button" role="radio" aria-checked="false" data-star="${n}" aria-label="${n} ${N.t(n === 1 ? "star" : "stars")}">★</button>`).join("")}</div>
+          <label>What should we improve? <span class="hint">Optional</span><textarea name="comment" maxlength="500" style="min-height:90px"></textarea></label>
+          <label>Your name <span class="hint">Optional</span><input name="name" maxlength="60"></label>
+          <div><button class="btn btn-primary" type="submit">Send rating</button></div>
+        </form>
+      </div></section>
+
+      <section class="faq-sec"><div class="wrap faq-grid">
+        <div class="section-head reveal"><span class="eyebrow">FAQ</span><h2>Questions</h2><p class="muted">Straight answers. Tap a question to open it.</p></div><div class="faq-list">
+        <details><summary>Who does the work — AI or a person?</summary><p>AI first. When HURANTEA's AI can do a job well (texts, translations, simple websites, spreadsheets, research summaries, small scripts), it does it itself and shows you a free sample first. Everything else, and anything you'd rather give to a person, goes to one verified human expert. You can always choose "Ask a human expert instead".</p></details>
+        <details><summary>How much does it cost?</summary><p>Posting is free. You get one fixed price for the whole job before work starts. AI jobs usually cost much less than hiring a person. Expert jobs are the expert's pay plus a ${Math.round(FEE * 100)}% HURANTEA service fee. Example: expert pay $100 + fee $15 = you pay $115.</p></details>
+        <details><summary>Do I need an account?</summary><p>No. You'll get a private tracking code after posting. Keep it to check your offer and progress under My requests.</p></details>
+        <details><summary>Who are the experts?</summary><p>Freelancers from around the world who joined HURANTEA with their skills and rates. Before taking any paid job, every expert has their ID and age (18+) verified. When a job needs a person, our AI picks the best fit.</p></details>
+        <details><summary>Can kids use HURANTEA?</summary><p>Yes — the Academy is free for every age. Taking paid jobs is only for adults (18+).</p></details>
+        <details><summary>Is my information private?</summary><p>Yes. Your contact details are only used to deliver your job and are never shown to other visitors.</p></details>
+      </div></div></section>`;
+    },
+
+    // MATCH-001: an expert's private link (#/expert/<key>) — the job, their own pay, accept or decline. No client details.
+    expert() { return `<div class="page"><div class="wrap" style="max-width:760px"><div class="card expert-card" id="expertBox" aria-live="polite"><p class="muted">Loading…</p></div></div></div>`; },
+    terms() { return NLEGAL.terms(); },
+    privacy() { return NLEGAL.privacy(); },
+
+    post() {
+      return `<div class="page"><div class="wrap layout">
+        <div class="card">
+          <div class="page-head"><h1 style="font-size:2rem">Hire an expert</h1><p class="muted">Tell us what you need. Our AI does it if it can, with a free sample; if not, a verified expert does. You get a fixed-price offer — no commitment until you accept.</p></div>
+          <form class="form" id="jobForm" novalidate>
+            <label>What do you need done?<input name="title" required maxlength="160" placeholder="e.g. Fix the checkout on my online shop"></label>
+            <label>Details <span class="hint">The more detail, the better the match. Any language.</span>
+              <textarea name="description" required maxlength="6000" placeholder="What should be delivered? Any links, files or examples?"></textarea></label>
+            <label>Files <span class="hint">Optional — PDF, photos, Word, Excel or text. Up to 5 files, 10 MB each.</span><input name="files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx,.xls,.xlsx"></label>
+            <div class="row2">
+              <label>Budget (USD) <span class="hint">Optional</span><input name="budget" type="number" min="0" step="1" placeholder="e.g. 150"></label>
+              <label>Deadline <span class="hint">Optional</span><input name="deadline" maxlength="80" placeholder="e.g. Within 1 week"></label>
+            </div>
+            <div class="row2">
+              <label>Your name<input name="name" required maxlength="120" autocomplete="name"></label>
+              <label>Email or WhatsApp<input name="contact" required maxlength="200" autocomplete="email" placeholder="So we can reach you">${N.LIVE ? "" : `<span class="hint form-preview">Preview: no email or WhatsApp message is sent. Your tracking code appears on screen after you send.</span>`}</label>
+            </div>
+            <label class="check"><input type="checkbox" name="agree" required><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms of Use</a> and the <a href="#/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+            <div><button class="btn btn-primary btn-lg" type="submit">Get my offer</button></div>
+            ${N.LIVE ? "" : `<p class="hint form-preview">Preview: this sends a sample request. No real expert or AI is used yet.</p>`}
+          </form>
+          <div id="jobDone" class="hidden"></div>
+        </div>
+        <aside class="card side-list">
+          <h3>What happens next</h3>
+          <div><span class="step-n" style="margin:0">1</span><span><b>AI reads your request</b><span class="muted">Instantly, any time of day.</span></span></div>
+          <div><span class="step-n" style="margin:0">2</span><span><b>AI does it, or an expert is matched</b><span class="muted">AI first. A person when the job needs one.</span></span></div>
+          <div><span class="step-n" style="margin:0">3</span><span><b>You get a fixed price</b><span class="muted">AI jobs come with a free sample. See it under My requests and accept with one click.</span></span></div>
+        </aside>
+      </div></div>`;
+    },
+
+    earn() {
+      return `<div class="page"><div class="wrap layout">
+        <div class="card">
+          <div class="page-head"><h1 style="font-size:2rem">Earn with your skills</h1><p class="muted">Join free. Set your rate. HURANTEA's AI does simple tasks itself, so the jobs we bring you are the ones that need a real person.</p></div>
+          <form class="form" id="talentForm" novalidate>
+            <div class="row2">
+              <label>Full name<input name="name" required maxlength="120" autocomplete="name"></label>
+              <label>Email or WhatsApp<input name="contact" required maxlength="200" autocomplete="email"></label>
+            </div>
+            <div class="row2">
+              <label>Country<input name="country" maxlength="80" data-suggest="country" placeholder="e.g. Bangladesh"></label>
+              <label>Your hourly rate (USD)<input name="rate" type="number" min="1" max="1000" step="1" required placeholder="e.g. 12"></label>
+            </div>
+            <label>Your skills <span class="hint">Separate with commas</span><input name="skills" required maxlength="1000" data-suggest="skills" placeholder="e.g. WordPress, logo design, Excel, video editing"></label>
+            <label>A few words about you <span class="hint">Optional — experience, tools, links to your work</span><textarea name="bio" maxlength="2000" style="min-height:110px"></textarea></label>
+            <div class="row2">
+              <label>How do you want to get paid?<select name="payoutMethod">
+                <option value="payoneer">Payoneer</option><option value="wise">Wise</option><option value="bank">Bank transfer</option><option value="other">Other / decide later</option></select></label>
+              <p class="muted payout-note">We'll ask for your account details securely after your first job is confirmed. Never type bank details into a form or chat.</p>
+            </div>
+            <p class="muted" style="font-size:.86rem;margin:-4px 0 0">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Before you can take paid jobs we verify your ID and age (18+) once. <a href="#/payments">How payouts work</a></p>
+            <label class="check"><input type="checkbox" name="adult" required><span>I am 18 or older. <span class="muted">(Under 18? The <a href="#/academy">Academy</a> is free for you.)</span></span></label>
+            <label class="check"><input type="checkbox" name="agree" required><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms of Use</a> and the <a href="#/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+            <div><button class="btn btn-primary btn-lg" type="submit">Join HURANTEA</button></div>
+          </form>
+          <div id="talentDone" class="hidden"></div>
+        </div>
+        <aside class="card side-list">
+          <h3>Why join</h3>
+          <div><span class="sl-n" aria-hidden="true">01</span><span><b>Your rate, paid in full</b><span class="muted">Our fee is added on top for the client.</span></span></div>
+          <div><span class="sl-n" aria-hidden="true">02</span><span><b>Work from anywhere</b><span class="muted">All you need is a skill and the internet.</span></span></div>
+          <div><span class="sl-n" aria-hidden="true">03</span><span><b>No bidding wars</b><span class="muted">One job, one expert: when you are asked, it is only you.</span></span></div>
+          <div><span class="sl-n" aria-hidden="true">04</span><span><b>Grow for free</b><span class="muted">Learn new skills in the Academy.</span></span></div>
+        </aside>
+      </div></div>`;
+    },
+
+    academy() {
+      return `<div class="page"><div class="wrap" style="max-width:820px">
+        <div class="page-head" style="text-align:center"><span class="tag warn">Free for every age</span>
+          <h1 style="font-size:2.3rem;margin-top:14px">HURANTEA Academy</h1>
+          <p class="muted">Pick a skill. Your AI tutor makes a simple, step-by-step plan with a practice project.</p></div>
+        <div class="card">
+          <form class="form" id="acForm">
+            <div class="row2">
+              <label>Who is learning?<select name="age">
+                <option value="kid (6-12)">Kid (6–12)</option><option value="teen (13-17)">Teen (13–17)</option><option value="adult" selected>Adult (18+)</option></select></label>
+              <label>What do you want to learn?<input name="topic" required maxlength="300" placeholder="e.g. Making a website, drawing logos, Excel"></label>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="ideas">
+              ${["Coding basics", "Graphic design", "Excel", "Video editing", "Writing", "Social media"].map((x) => `<button type="button" class="btn btn-ghost btn-sm" data-idea="${x}">${x}</button>`).join("")}
+            </div>
+            <div><button class="btn btn-primary btn-lg" type="submit">Make my learning plan</button></div>
+          </form>
+        </div>
+        <div id="lesson" style="margin-top:18px"></div>
+      </div></div>`;
+    },
+
+    payments() {
+      const I = N.ICONS, ic = (k) => I[k].replace('class="ic"', 'class="ic" style="width:22px;height:22px"');
+      return `<div class="page"><div class="wrap" style="max-width:960px">
+        <div class="page-head" style="text-align:center"><h1 style="font-size:2.3rem">Payments & payouts</h1>
+          <p class="muted">Simple, fixed prices for clients. Fair, safe payouts for experts.</p></div>
+        ${N.LIVE ? "" : `<div class="legal-note card"><b>Preview.</b> Payments are not connected yet. This page explains how they will work at launch.</div>`}
+        <div class="grid2">
+          <div class="card"><div class="step-n">${ic("card")}</div><h3>For clients: how you pay</h3>
+            <ol style="padding-left:20px;line-height:1.9;margin:0">
+              <li>Accept your fixed-price offer.</li>
+              <li>Pay securely by card through our payment partner. Until card checkout opens, we send you a secure payment link.</li>
+              <li>Your money is <b>held safely</b> — the expert doesn't receive it yet.</li>
+              <li>You confirm the work is delivered, then it's released.</li></ol>
+            <p class="muted" style="margin:12px 0 0">Not delivered? You get your money back. One fixed price: for expert jobs the ${Math.round(FEE * 100)}% HURANTEA fee is already included, and for AI jobs the whole price goes to HURANTEA.</p></div>
+          <div class="card"><div class="step-n">${ic("wallet")}</div><h3>For experts: how you get paid</h3>
+            <ol style="padding-left:20px;line-height:1.9;margin:0">
+              <li>Do the work and deliver it.</li>
+              <li>The client confirms (or 7 days pass with no complaint).</li>
+              <li>We send your full rate to your <b>Payoneer, Wise or bank account</b>.</li></ol>
+            <p class="muted" style="margin:12px 0 0">You always receive your own rate in full — our fee is paid by the client on top.</p></div>
+        </div>
+        <div class="card" id="safety" style="margin-top:18px"><div class="step-n">${ic("shield")}</div><h3>Safety & verification</h3>
+          <div class="grid3" style="margin-top:8px">
+            <div><b>Every job is checked</b><p class="muted">Our AI screens each request and declines anything illegal, harmful or deceptive.</p></div>
+            <div><b>Experts are verified</b><p class="muted">Before taking any paid job, each expert verifies their ID and age (18+) once.</p></div>
+            <div><b>Stay on HURANTEA</b><p class="muted">Never pay or get paid outside HURANTEA. Experts never pay to get work, and clients only pay into HURANTEA's held payment, never to a person.</p></div>
+          </div></div>
+        <div class="cta-row" style="justify-content:center;margin-top:26px"><a class="btn btn-primary btn-lg" href="#/post">Post a job</a><a class="btn btn-ghost btn-lg" href="#/earn">Join as an expert</a></div>
+      </div></div>`;
+    },
+
+    track() {
+      const codes = myCodes();
+      return `<div class="page"><div class="wrap" style="max-width:820px">
+        <div class="page-head"><h1 style="font-size:2rem">My requests</h1><p class="muted">Check your offers and progress. Your requests on this device appear automatically.</p><p class="muted track-note">Codes are saved only in this browser. Keep a copy somewhere safe, and don't share it: anyone with the code can see that request. Lost it? Contact support with the email or WhatsApp you used.</p></div>
+        <div class="card" style="margin-bottom:18px">
+          <form class="form" id="trackForm" style="grid-template-columns:1fr auto;align-items:end">
+            <label>Have a tracking code?<input name="code" placeholder="Paste your tracking code" required></label>
+            <button class="btn btn-primary" type="submit">Check</button>
+          </form>
+        </div>
+        <div id="reqList">${codes.length ? "" : `<div class="card" style="text-align:center"><p class="muted">No requests on this device yet.</p><a class="btn btn-primary" href="#/post">Post a job</a></div>`}</div>
+      </div></div>`;
+    },
+  };
+
+
+  const val = (f) => Object.fromEntries(new FormData(f).entries());
+  function busy(btn, on, label) { btn.disabled = on; if (on) { btn._t = btn.innerHTML; btn.innerHTML = `<span class="spinner"></span>${label || "Sending…"}`; } else if (btn._t) btn.innerHTML = btn._t; }
+  function need(f, names) {
+    for (const n of names) { const el = f.elements[n]; const bad = el.type === "checkbox" ? !el.checked : !String(el.value).trim(); if (bad) { el.focus(); toast("Please fill in: " + (el.closest("label")?.firstChild?.textContent || n).trim()); return false; } }
+    return true;
+  }
+
+  // DIAG-041: one request per press — a second Enter/tap while a form is sending is ignored (every form, before its own handler)
+  document.addEventListener("submit", (e) => { const b = e.target.querySelector && e.target.querySelector("button[type=submit]"); if (b && b.disabled) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  // keep what visitors typed if they leave a form and come back (this tab only)
+  function keepDraft(f) {
+    const key = "hurantea-form-" + f.id, saved = (() => { try { return JSON.parse(sessionStorage.getItem(key) || "{}"); } catch { return {}; } })();
+    for (const [n, v] of Object.entries(saved)) { const el = f.elements[n]; if (!el || el.type === "checkbox" || el.type === "file") continue; if (!el.value) el.value = v; }
+    f.addEventListener("input", () => { const d = {}; for (const el of f.elements) if (el.name && el.type !== "checkbox" && el.type !== "file" && !["name", "contact"].includes(el.name) && el.value) d[el.name] = el.value; try { sessionStorage.setItem(key, JSON.stringify(d)); } catch {} });
+    f.addEventListener("submit", () => setTimeout(() => { try { sessionStorage.removeItem(key); } catch {} }, 0));
+  }
+
+  // ---------- behaviour ----------
+  const wire = {
+    home() {
+      const stage = document.getElementById("stage");
+      NCore.mount(stage); NCore.show(true);
+      const mobile = () => innerWidth < 900;
+      const place = () => mobile() ? NCore.offset(0.18, -0.55) : NCore.offset(0.48, 0.02);
+      place(); NCore.morph(0); NCore.hue(0);
+      const ta = document.getElementById("cmdText"), sp = document.getElementById("spatial");
+      const T = (s) => N.t(s);
+      let tmr;
+      let picks = {}, lastText = "";
+      function cards(text) {
+        if (text !== lastText) { if (!text.trim()) picks = {}; lastText = text; }
+        const e = NEstimate.estimate(text, FEE, picks);
+        if (!e) { sp.innerHTML = `<div class="scard idle" style="--i:0"><span class="scard-k">${T("AI Core")}</span><b>${T("Waiting for your idea…")}</b><span class="typing"><i></i><i></i><i></i></span></div>`; return; }
+        const idx = NEstimate.CATS.findIndex((c) => c.id === e.cats[0].id); NCore.hue(idx < 0 ? 0 : (idx % 3) / 2.4);
+        sp.innerHTML = `
+          <div class="scard s1" style="--i:0"><span class="scard-k">${T("Your living brief")}</span><div class="scard-chips">${e.cats.map((c) => `<span class="tag">${T(c.label)}</span>`).join("")}${e.urgent ? `<span class="tag warn">${T("Urgent")}</span>` : ""}</div>
+            ${e.brief.length ? `<div class="brief">${e.brief.map((b) => `<button type="button" class="node ${b.on ? "on" : ""}" data-pick="${b.key}" aria-pressed="${b.on}">${b.on ? "✓" : "+"} ${T(b.label)}</button>`).join("")}</div>` : ""}
+            <div class="prov" aria-label="${T("Legend")}"><span>✓ ${T("Confirmed by you")}</span><span>+ ${T("Suggested by AI")}</span></div><div class="conf"><i style="width:${Math.round(e.confidence * 100)}%"></i></div><span class="scard-n">${T("Tap to add or remove. Add more detail for a sharper estimate.")}</span></div>
+          <div class="scard s2" style="--i:1"><span class="scard-k" data-aff="${T("changes with your brief")}">${T("Estimated time")}</span><b class="big">${e.days}–${e.days2} ${T("days")}</b></div>
+          <div class="scard s3" style="--i:2"><span class="scard-k" data-aff="${T("changes with your brief")}">${T("Estimated price")}</span><b class="big">$${e.lo} – $${e.hi}</b><span class="scard-n">${T("Based on about")} ${e.hours} ${T("hours")} × ~$${e.rate}/${T("h")} + ${Math.round(FEE * 100)}% ${T("fee")}. ${T("Estimate only. Your fixed price comes after matching.")}</span></div>
+          <button class="scard s4 btn-primary magnet" style="--i:3" id="goOffer" type="button">${T("Get my fixed offer")} <span aria-hidden="true">→</span></button>`;
+        sp.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => { picks[b.dataset.pick] = b.getAttribute("aria-pressed") !== "true"; NCore.pulse(.8); cards(ta.value); sp.classList.add("refresh"); setTimeout(() => sp.classList.remove("refresh"), 50); }));
+        const go = sp.querySelector("#goOffer"); if (go) go.onclick = submit;
+        sp._brief = e.brief.filter((b) => b.on).map((b) => b.label);
+      }
+      function submit(ev) {
+        ev && ev.preventDefault && ev.preventDefault();
+        const v = ta.value.trim(); if (v.length < 4) { ta.focus(); return toast(T("Tell the AI what you need first.")); }
+        store.set("hurantea-draft", v + (sp._brief && sp._brief.length ? "\n\nRequirements: " + sp._brief.join(", ") : "")); NCore.burst(); setTimeout(() => (location.hash = "#/post"), 420);
+      }
+      // the box grows to fit what is typed — and, when empty, to fit the whole example text (no cut-off lines)
+      const mirror = document.createElement("div"); mirror.className = "cmd-mirror"; mirror.setAttribute("aria-hidden", "true"); ta.parentNode.appendChild(mirror);
+      const grow = () => {
+        if (ta.value) { ta.style.height = "auto"; ta.style.height = Math.min(160, ta.scrollHeight) + "px"; return; }
+        const cs = getComputedStyle(ta); mirror.style.width = ta.clientWidth + "px"; mirror.style.font = cs.font; mirror.style.lineHeight = cs.lineHeight; mirror.style.padding = cs.padding;
+        mirror.textContent = ta.placeholder; ta.style.height = Math.min(160, mirror.scrollHeight) + "px";
+      };
+      addEventListener("resize", grow);
+      // keep the box in view when the phone keyboard opens
+      const keepInView = () => { const r = ta.getBoundingClientRect(), vh = (window.visualViewport ? visualViewport.height : innerHeight); if (r.top < 0 || r.bottom + 70 > vh) ta.closest("form").scrollIntoView({ block: "center" }); };
+      ta.addEventListener("focus", () => setTimeout(keepInView, 60)); window.visualViewport?.addEventListener("resize", () => { if (document.activeElement === ta) keepInView(); });
+      ta.addEventListener("input", () => { grow(); NCore.pulse(.35); clearTimeout(tmr); tmr = setTimeout(() => cards(ta.value), 220); });
+      ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } });
+      document.getElementById("cmd").onsubmit = submit;
+      document.querySelectorAll("[data-chip]").forEach((b) => (b.onclick = () => { ta.value = b.textContent.trim(); grow(); NCore.pulse(.9); cards(ta.value); ta.focus(); }));
+      cards("");
+      // typewriter placeholder cycling through real examples
+      const ex = ["e.g. Build a website for my bakery with an online shop", "e.g. Translate my restaurant menu into Arabic", "e.g. Design a logo for my fashion brand", "e.g. Edit a 5-minute YouTube video"].map(T);
+      let ei = 0; const ph = setInterval(() => { if (!document.body.contains(ta)) return clearInterval(ph); if (!ta.value) { ei = (ei + 1) % ex.length; ta.placeholder = ex[ei]; grow(); } }, 3200);
+      grow();
+      // scroll story: the same Core morphs
+      const story = document.getElementById("osStory"), steps = [...document.querySelectorAll(".sstep")], meter = document.querySelector(".story-meter i");
+      const onScroll = () => {
+        if (!document.body.contains(story)) return removeEventListener("scroll", onScroll);
+        const r = story.getBoundingClientRect(), span = r.height - innerHeight;
+        const p = Math.max(0, Math.min(1, -r.top / Math.max(1, span)));
+        const inStory = r.top < innerHeight * .5 && r.bottom > innerHeight * .5;
+        NCore.morph(r.top > 0 ? 0 : p * 3.15);
+        if (r.top < innerHeight * .4) mobile() ? NCore.offset(0, -0.25) : NCore.offset(0.42, 0); else place();
+        const k = Math.min(3, Math.floor(p * 4)); steps.forEach((s, i) => s.classList.toggle("on", i === k && inStory));
+        if (meter) meter.style.height = p * 100 + "%";
+        // the AI Core lives in the hero only; below it, the creation background tells the story (no leftover ring)
+        const fade = Math.max(0, 1 - scrollY / (innerHeight * .55)); stage.style.opacity = fade.toFixed(3); stage.style.visibility = fade < .01 ? "hidden" : "";
+      };
+      addEventListener("scroll", onScroll, { passive: true }); onScroll();
+      // ratings
+      const sum = document.getElementById("rateSummary"); let chosen = 0;
+      const drawSummary = async () => { try { const s = await api.ratingSummary();
+        sum.innerHTML = s.count ? `<div class="rate-big">${s.avg.toFixed(1)}<span>/5</span></div><div class="stars-static" style="--v:${s.avg / 5}">★★★★★</div><div class="muted">${s.count} ${T(s.count === 1 ? "rating" : "ratings")}</div>${(s.recent || []).map((r) => `<blockquote class="rq">“${esc(r.comment)}”<cite>${esc(r.name || T("Visitor"))} · ${"★".repeat(r.stars)}</cite></blockquote>`).join("")}`
+          : `<p class="muted">${T("No ratings yet — be the first.")}</p>`; } catch { sum.innerHTML = ""; } };
+      drawSummary();
+      document.querySelectorAll("[data-star]").forEach((b) => (b.onclick = () => { chosen = +b.dataset.star; document.querySelectorAll("[data-star]").forEach((x) => { const on = +x.dataset.star <= chosen; x.classList.toggle("on", on); x.setAttribute("aria-checked", x === b); }); }));
+      const rf = document.getElementById("rateForm");
+      if (store.get("hurantea-rated", false)) rf.innerHTML = `<p class="muted">${T("You already rated HURANTEA from this device. Thank you!")}</p>`;
+      else rf.onsubmit = async (e) => { e.preventDefault(); if (!chosen) return toast(T("Choose 1 to 5 stars first.")); const v = val(rf); const rb = rf.querySelector("button[type=submit]"); if (rb) busy(rb, true);
+        try { await api.rate({ stars: chosen, comment: (v.comment || "").trim(), name: (v.name || "").trim() }); store.set("hurantea-rated", true);
+          rf.innerHTML = `<p><b>${T("Thank you for rating HURANTEA!")}</b></p><p class="muted">${T("Comments appear after a quick review.")}</p>`; drawSummary(); } catch (err) { toast(err.message); if (rb) busy(rb, false); } };
+    },
+    post() {
+      const f = document.getElementById("jobForm");
+      keepDraft(f);
+      const draft = store.get("hurantea-draft", "");
+      if (draft) { f.elements.description.value = draft; f.elements.title.value = draft.split(/[.!?\n]/)[0].slice(0, 90); store.set("hurantea-draft", ""); }
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        if (!need(f, ["title", "description", "name", "contact", "agree"])) return;
+        const v = val(f);
+        if (v.description.trim().length < 10) return toast("Please add a few more details.");
+        const files = [...(f.elements.files?.files || [])];
+        if (files.length > 5) return toast("Please choose up to 5 files.");
+        if (files.some((x) => x.size > 10 * 1024 * 1024)) return toast("Please use files up to 10 MB each.");
+        const btn = f.querySelector("button[type=submit]"); busy(btn, true);
+        try {
+          f._rid = f._rid || (crypto.randomUUID ? crypto.randomUUID() : null);   // DIAG-046: same press/retry from THIS browser → same request
+          const token = await api.submitJob({ requestId: f._rid, title: v.title.trim(), description: v.description.trim(), budget: v.budget ? Number(v.budget) : null, deadline: v.deadline.trim(), name: v.name.trim(), contact: v.contact.trim(), files });
+          addCode(token, v.title.trim());
+          f.classList.add("hidden");
+          const d = document.getElementById("jobDone"); if (!d) return; d.classList.remove("hidden");
+          d.innerHTML = `<div style="text-align:center;padding:10px 0"><div style="font-size:2.4rem"><span class="big-check" aria-hidden="true">✓</span></div><h2>Request received</h2>
+            <p class="muted">Our AI is checking your request now. If it can do the job itself, you'll get a free sample and a fixed price; if a person is needed, we match a verified expert. Your offer will appear under My requests.</p>
+            ${N.LIVE ? "" : `<p class="hint form-preview">Preview: this sends a sample request. No real expert or AI is used yet.</p>`}
+            <p>Your tracking code:<br><span class="code" id="tok">${esc(token)}</span></p>
+            <div class="cta-row" style="justify-content:center"><button class="btn btn-ghost" id="copyTok">Copy code</button><a class="btn btn-primary" href="#/track">See my requests</a></div></div>`;
+          const ct = d.querySelector("#copyTok"); if (ct) ct.onclick = () => { navigator.clipboard?.writeText(token).then(() => toast("Code copied"), () => toast("Select and copy the code")); };
+        } catch (err) { toast(err.message || "Something went wrong. Please try again."); busy(btn, false); }
+      };
+    },
+    earn() {
+      const f = document.getElementById("talentForm"); keepDraft(f);
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        if (!need(f, ["name", "contact", "rate", "skills", "adult", "agree"])) return;
+        const v = val(f); const btn = f.querySelector("button[type=submit]"); busy(btn, true);
+        try {
+          await api.joinTalent({ name: v.name.trim(), contact: v.contact.trim(), country: v.country.trim(), skills: v.skills.trim(), rate: Number(v.rate), bio: v.bio.trim(), adult: true, payoutMethod: v.payoutMethod, payoutDetails: "" });
+          f.classList.add("hidden");
+          const d = document.getElementById("talentDone"); d.classList.remove("hidden");
+          d.innerHTML = `<div style="text-align:center;padding:10px 0"><div style="font-size:2.4rem"><span class="big-check" aria-hidden="true">✓</span></div><h2>Welcome to HURANTEA</h2>
+            <p class="muted">You're in our network. We'll contact you at ${esc(v.contact)} for a one-time ID and age check, then send you jobs that fit your skills.</p>
+            <a class="btn btn-ghost" href="#/academy">Learn a new skill meanwhile</a></div>`;
+        } catch (err) { toast(err.message || "Something went wrong. Please try again."); busy(btn, false); }
+      };
+    },
+    academy() {
+      const f = document.getElementById("acForm");
+      document.querySelectorAll("[data-idea]").forEach((b) => (b.onclick = () => { f.elements.topic.value = b.dataset.idea; }));
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const v = val(f); if (!v.topic.trim()) return toast("What would you like to learn?");
+        const btn = f.querySelector("button[type=submit]"); busy(btn, true, "Your tutor is thinking…");
+        const out = document.getElementById("lesson");
+        try {
+          const l = await api.academy({ age: v.age, topic: v.topic.trim(), lang: NI18N.lang() });
+          out.innerHTML = `<div class="card"><span class="tag ok">Your plan</span><h2 style="margin-top:12px">${esc(l.title)}</h2>
+            <p class="muted">${esc(l.why)}</p><ol style="padding-left:20px;line-height:1.9">${(l.steps || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+            <p><b>Practice project:</b> ${esc(l.project)}</p><p class="muted"><b>Next:</b> ${esc(l.next)}</p>
+            ${/kid|teen/.test(v.age) ? `<p class="muted" style="font-size:.88rem">Learning is free at any age. Paid jobs on HURANTEA are for adults (18+).</p>` : `<a class="btn btn-ghost btn-sm" href="#/earn">Ready? Earn with this skill</a>`}</div>`;
+          out.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (err) { toast(err.message || "Please try again."); }
+        busy(btn, false);
+      };
+    },
+    expert() {
+      const box = document.getElementById("expertBox"), key = (location.hash.split("/")[2] || "").trim();
+      const closed = (msg) => { box.innerHTML = `<h1 style="font-size:1.6rem">${N.t("This request is closed")}</h1><p class="muted">${N.t(msg)}</p>`; };
+      const draw = async () => {
+        let o = null; if (/^[0-9a-f-]{36}$/i.test(key)) { try { o = await api.expertOffer(key); } catch (e) { toast(e.message); } }
+        if (!o) return closed("This link is not valid. Please check that you copied the whole link.");
+        if (o.state === "accepted") { box.innerHTML = `<span class="tag ok">${N.t("Confirmed")}</span><h1 style="font-size:1.6rem;margin-top:10px">${esc(o.title)}</h1><p>${N.t("Thank you — you confirmed this job. The client now sees your fixed price and decides. We'll contact you as soon as they accept.")}</p>`; return; }
+        if (o.state !== "asking") return closed(o.state === "expired" ? "The time to answer has passed, so we asked another expert. Thank you." : "Thank you. This job is no longer waiting for your answer.");
+        box.innerHTML = `<span class="tag warn">${N.t("New job for you")}</span>
+          <h1 style="font-size:1.7rem;margin:10px 0 6px">${esc(o.title)}</h1>
+          <p class="desc muted">${esc(o.description)}</p>
+          ${o.deadline ? `<p><b>${N.t("Client's deadline")}:</b> ${esc(o.deadline)}</p>` : ""}
+          <p><b>${N.t("Estimated time")}:</b> ${esc(o.hours)} h</p>
+          <div class="pay">${money(o.pay_usd)}</div><p class="hint" style="margin-top:2px">${N.t("Your pay — your own rate, paid in full. HURANTEA's fee is added on top for the client.")}</p>
+          <p class="muted">${N.t("Please answer by")} ${new Date(o.answer_by).toLocaleString()}.</p>
+          <div class="cta-row" style="margin-top:14px"><button class="btn btn-primary" id="exAcc">${N.t("Accept this job")}</button><button class="btn btn-ghost" id="exDec">${N.t("Decline")}</button></div>
+          <p class="hint" style="margin-top:10px">${N.t("Accepting confirms you can deliver this work at this price. Only then does the client see the offer.")}</p>
+          ${N.LIVE ? "" : `<p class="hint form-preview">${N.t("Preview: sample data. Sample experts also answer by themselves after a few seconds.")}</p>`}`;
+        const go = async (acc) => { box.querySelectorAll("button").forEach((b) => (b.disabled = true));
+          try { const r = await api.expertRespond(key, acc); toast(N.t(r === "accepted" ? "Thank you — job confirmed." : r === "declined" ? "Declined. We'll ask another expert." : "This job is no longer waiting for your answer.")); } catch (e) { toast(e.message); }
+          draw(); };
+        document.getElementById("exAcc").onclick = () => go(true);
+        document.getElementById("exDec").onclick = () => { if (confirm(N.t("Decline this job? We'll ask another expert."))) go(false); else box.querySelectorAll("button").forEach((b) => (b.disabled = false)); };
+      };
+      draw();
+    },
+    track() {
+      const f = document.getElementById("trackForm");
+      f.onsubmit = (e) => { e.preventDefault(); const c = f.elements.code.value.trim(); if (!c) return; addCode(c, "Request"); renderReqs(); f.reset(); };
+      renderReqs();
+    },
+  };
+
+  async function renderReqs() {
+    const box = document.getElementById("reqList"); if (!box) return;
+    const codes = myCodes(); if (!codes.length) return;
+    const rows = await Promise.all(codes.map(async (c) => { try { return { c, r: await api.track(c.token) }; } catch { return { c, r: null }; } }));
+    box.innerHTML = rows.map(({ c, r }) => {
+      if (!r) return `<div class="card" style="margin-bottom:14px"><b>${esc(c.title)}</b><p class="muted" style="margin:6px 0 0">Code not found. <span class="code">${esc(c.token)}</span></p></div>`;
+      const ai = r.route === "ai";
+      // STRATEGY-001: AI jobs say who is working on them
+      const AIST = { quoted: ["Offer ready", "ok", "Your free sample and fixed-price offer are ready."], accepted: ["In progress", "", "HURANTEA's AI is making your full work. It is checked before you get it."], delivered: ["Delivered", "ok", "Your work is ready below. Please review it."] };
+      const st = (ai && AIST[r.status]) || STATUS[r.status] || [r.status, "", ""]; const idx = STEPS.indexOf(["searching", "ai_check"].includes(r.status) ? "asking" : r.status === "clarify" ? "received" : r.status);
+      const box2 = (inner) => `<div class="card" style="margin-top:14px;padding:14px;background:var(--surface2);box-shadow:none">${inner}</div>`;
+      const pre = (t) => `<pre class="ai-out" style="white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;margin:8px 0 0;font-size:.84rem;line-height:1.55">${esc(t)}</pre>`;
+      return `<div class="card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><div><h3 style="margin:0">${esc(r.title)}</h3>
+          <div class="muted" style="font-size:.85rem">Sent ${new Date(r.created_at).toLocaleString()}</div>${ai ? `<div class="muted" style="font-size:.85rem">Made by HURANTEA AI</div>` : ""}</div><span class="tag ${st[1]}">${st[0]}</span></div>
+        ${idx >= 0 ? `<div class="timeline">${STEPS.map((_, i) => `<span class="${i <= idx ? "on" : ""}"></span>`).join("")}</div>` : ""}
+        <p class="muted" style="margin-bottom:8px">${esc(st[2])}</p>
+        ${r.offer_text && r.offer_text !== st[2] && !["asking", "no_match", "cancelled", "ai_check", "clarify"].includes(r.status) && (!ai || r.status === "quoted") ? `<p>${esc(r.offer_text)}</p>` : ""}
+        ${r.offer_usd != null && ["quoted", "accepted", "delivered", "paid"].includes(r.status) ? `<div class="price">${money(r.offer_usd)} <span class="muted" style="font-size:.9rem;font-weight:500">${ai ? "fixed price · made by HURANTEA AI" : "fixed price · confirmed by the expert"}</span></div>` : ""}
+        ${ai && r.sample && r.status === "quoted" ? box2(`<b>Free sample</b><div class="muted" style="font-size:.86rem">A short piece of your work, so you can judge it before you pay.</div>${pre(r.sample)}`) : ""}
+        ${r.status === "quoted" && ai ? `<div class="cta-row" style="margin-top:14px"><button class="btn btn-primary" data-acc="${esc(c.token)}">Accept & continue to payment</button><button class="btn btn-ghost" data-human="${esc(c.token)}">Ask a human expert instead</button><button class="btn btn-ghost" data-dec="${esc(c.token)}">Decline</button></div>
+          <p class="muted" style="margin-top:10px;font-size:.86rem">Prefer a person? A verified expert confirms their own price. It is usually higher, and you decide again.</p>` : ""}
+        ${r.status === "quoted" && !ai ? `<div class="cta-row" style="margin-top:14px"><button class="btn btn-primary" data-acc="${esc(c.token)}">Accept & continue to payment</button>${r.tries_left > 0 ? `<button class="btn btn-ghost" data-next="${esc(c.token)}">Try another expert</button>` : ""}<button class="btn btn-ghost" data-dec="${esc(c.token)}">Decline</button></div>
+          ${r.tries_left > 0 ? `<p class="muted" style="margin-top:10px;font-size:.86rem">Not right? We'll ask the next suitable expert. Their price may be different, and you decide again.</p>` : ""}` : ""}
+        ${r.status === "clarify" ? box2(`<b>A few quick questions</b><ol style="margin:8px 0 0 18px;padding:0;line-height:1.7">${(r.questions || []).map((q) => `<li>${esc(q)}</li>`).join("")}</ol>
+          <label style="display:block;margin-top:12px">Your answers<textarea data-ansbox="${esc(c.token)}" maxlength="2000" style="min-height:96px" placeholder="Answer in a few words, in any language"></textarea></label>
+          <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-ans="${esc(c.token)}">Send answers</button></div>`) : ""}
+        ${r.status === "ai_check" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> We check the sample and price before you see them.</div><div style="margin-top:10px;display:flex;gap:14px;flex-wrap:wrap"><button class="linkbtn" data-human="${esc(c.token)}">Ask a human expert instead</button></div>` : ""}
+        ${r.status === "asking" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> Waiting for the expert's confirmation. You'll only see a price an expert has agreed to.</div>` : ""}
+        ${r.status === "no_match" ? `<p class="muted">You can change the request and post it again, or cancel it. We never hand it to someone you haven't approved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Edit and post again</button><button class="btn btn-ghost" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
+        ${["received", "searching", "clarify", "asking", "ai_check"].includes(r.status) ? `<div style="margin-top:10px"><button class="linkbtn" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
+        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">We'll send a secure card payment link to your contact. Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? "" : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
+        ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery.</p>` : ""}
+        ${ai && r.status === "accepted" && r.payment_status === "held" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
+        ${ai && r.deliverable ? box2(`<b>Your finished work</b>${pre(r.deliverable)}<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>
+          <p class="muted" style="margin:10px 0 0;font-size:.86rem">Something not right? Tell us within 7 days and we fix it, or a human expert takes over.</p>${N.C.contactEmail ? `<p style="margin:6px 0 0;font-size:.86rem"><a href="mailto:${esc(N.C.contactEmail)}?subject=${encodeURIComponent("Change request: " + r.title)}">Ask for a change</a></p>` : ""}`) : ""}
+        ${["received", "searching"].includes(r.status) ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> AI is working on it — this page updates by itself.</div>` : ""}
+      </div>`;
+    }).join("");
+    const work = Object.fromEntries(rows.filter((x) => x.r && x.r.deliverable).map((x) => [x.c.token, x.r]));
+    box.querySelectorAll("[data-dlcopy]").forEach((b) => (b.onclick = () => navigator.clipboard?.writeText(work[b.dataset.dlcopy].deliverable).then(() => toast("Copied"), () => toast("Select the text and copy it"))));
+    box.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => { const w = work[b.dataset.dl], ext = { website: "html", code: "txt" }[b.dataset.kind] || "txt";
+      const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([w.deliverable], { type: ext === "html" ? "text/html" : "text/plain" })); a.download = (w.title || "hurantea-work").replace(/[^\w\- ]+/g, "").trim().slice(0, 60).replace(/\s+/g, "-") + "." + ext; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }));
+    box.querySelectorAll("[data-ans]").forEach((b) => (b.onclick = async () => { const t = box.querySelector(`[data-ansbox="${b.dataset.ans}"]`), v = (t && t.value || "").trim();
+      if (v.length < 2) { t && t.focus(); return toast("Please write your answers first."); } b.disabled = true;
+      try { const r = await api.clientAnswer(b.dataset.ans, v); toast(r === "received" ? "Thank you. The AI is preparing your offer." : "Nothing changed."); } catch (e) { toast(e.message); b.disabled = false; return; } t.value = ""; renderReqs(); }));
+    box.querySelectorAll("[data-human]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Give this job to a human expert instead? The AI offer will be closed."))) return; b.disabled = true;
+      try { const r = await api.clientHuman(b.dataset.human); toast(r === "asking" ? "Asking a verified expert to confirm." : r === "unchanged" ? "Nothing changed." : "We'll find a verified expert for you."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-next]").forEach((b) => (b.onclick = async () => { b.disabled = true;
+      try { const r = await api.clientNext(b.dataset.next); toast(r === "asking" ? "Asking the next expert to confirm." : r === "no_match" ? "No other expert could confirm yet." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Cancel this request? The expert will not start work."))) return; b.disabled = true;
+      try { await api.cancel(b.dataset.cancel); toast("Request cancelled."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-again]").forEach((b) => (b.onclick = () => {
+      try { sessionStorage.setItem("hurantea-form-jobForm", JSON.stringify({ title: b.dataset.title })); } catch {} location.hash = "#/post"; }));
+    box.querySelectorAll("[data-acc],[data-dec]").forEach((b) => (b.onclick = async () => {
+      const acc = !!b.dataset.acc; b.disabled = true;
+      try { await api.respond(b.dataset.acc || b.dataset.dec, acc); toast(acc ? "Offer accepted. Next: secure payment." : "Offer declined."); } catch (e) { toast(e.message); }
+      renderReqs();
+    }));
+  }
+  // the automatic refresh never wipes answers a client is typing
+  const reqBusy = () => { const a = document.activeElement; return !!(a && a.closest && a.closest("#reqList") && /^(TEXTAREA|INPUT)$/.test(a.tagName)) || [...document.querySelectorAll("[data-ansbox]")].some((t) => t.value.trim()); };
+  setInterval(() => { if (route() === "track" && !document.hidden && !reqBusy()) renderReqs(); }, 15000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && route() === "track" && !reqBusy()) renderReqs(); });   // back on the tab → latest status at once
+
+  // ---------- legal ----------
+  const LEGAL = {
+    privacy: `<h2>Privacy</h2><p class="muted">HURANTEA (Dubai, UAE) collects only what you type into our forms: your name, contact details and job or skill information.</p>
+      <p>We use it only to match jobs with freelancers and to contact you about your request. We never sell your data and never show it to other visitors. Our AI processes your text to understand and match jobs.</p>
+      <p>To have your data deleted, contact us using the details you used to sign up, and we'll remove it.</p>`,
+    terms: `<h2>Terms</h2><p>HURANTEA connects clients with independent freelancers. Posting a job is free. An offer is a fixed price for the described work and includes a ${Math.round(FEE * 100)}% HURANTEA service fee.</p>
+      <p>Work starts only after you accept an offer. Freelancers must be 18 or older to take paid work. The Academy is free for all ages.</p>
+      <p>We don't accept illegal, harmful, adult or deceptive requests (for example fake reviews or cheating). We may decline any request.</p>`,
+  };
+  const modal = document.getElementById("modal");
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-legal]");
+    if (a) { e.preventDefault(); document.getElementById("modalBox").innerHTML = LEGAL[a.dataset.legal] + `<button class="btn btn-primary" id="mClose">Close</button>`; modal.classList.add("open"); document.getElementById("mClose").onclick = () => modal.classList.remove("open"); }
+  });
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.remove("open"); };
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.remove("open"); });
+
+  // ---------- router ----------
+  function route() { const r = (location.hash.replace(/^#\/?/, "").split(/[?#\/]/)[0] || "home"); return pages[r] ? r : "home"; }
+  function render() {
+    document.getElementById("modal").classList.remove("open");
+    const r = route(); if (r !== "home" && window.NCore) NCore.show(false); document.body.dataset.route = r; lastRoute = r;
+    app.innerHTML = pages[r](); wire[r]?.();
+    document.querySelectorAll("[data-r]").forEach((a) => a.classList.toggle("on", a.dataset.r === r));
+    links.classList.remove("open");
+    const anchor = location.hash.split("#")[2]; const target = anchor && document.getElementById(anchor);
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: "smooth" }), 30); else window.scrollTo(0, 0);
+    document.title = N.t({ home: "HURANTEA — Get work done by AI, or by a verified expert when a person is needed", post: "Hire an expert · HURANTEA", earn: "Earn with your skills · HURANTEA", academy: "Academy · HURANTEA", track: "My requests · HURANTEA", payments: "Payments & payouts · HURANTEA", terms: "Terms of Use · HURANTEA", privacy: "Privacy Policy · HURANTEA", expert: "Job offer · HURANTEA" }[r]);
+  }
+  // in-page anchors like #osStory scroll smoothly instead of re-rendering the page
+  addEventListener("hashchange", (e) => {
+    const hsh = location.hash;
+    if (hsh && !hsh.startsWith("#/") && hsh.length > 1) { const el = document.getElementById(hsh.slice(1)); if (el) { el.scrollIntoView({ behavior: "smooth" }); history.replaceState(null, "", e.oldURL && e.oldURL.includes("#/") ? "#" + e.oldURL.split("#").slice(1).join("#") : "#/"); return; } }
+    // DIAG-045: a contents link inside the same page (#/terms#t-service) only scrolls — no re-render, so the jump
+    // is never cancelled and keyboard focus lands on the section
+    const anc = hsh.split("#")[2];
+    if (anc && route() === lastRoute) { const el = document.getElementById(anc); if (el) { el.setAttribute("tabindex", "-1"); el.scrollIntoView({ behavior: "smooth" }); el.focus({ preventScroll: true }); return; } }
+    render();
+  });
+  let lastRoute = null;
+  render();
+})();
+</script>
+</body>
+</html>
