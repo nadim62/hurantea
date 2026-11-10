@@ -80,9 +80,9 @@
 </main>
 
 <script>window.HURANTEA_OWNER_PAGE = true;</script>
-<script src="config.js?v=20261110c"></script>
+<script src="config.js?v=20261110fix14"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110j"></script>
+<script src="assets/core.js?v=20261110fix14"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -180,7 +180,7 @@
   function needs() {
     const S = data.settings || {}, ch = Number(S.confirmHours || 12), out = [], add = (lvl, title, detail, go) => out.push({ lvl, title, detail, go });
     if (S.aiPaused) add(2, "AI Boss is paused", "New jobs are waiting until you resume it.", "boss");
-    if (N.LIVE && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add(3, "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago. It should run every 5 minutes — check the cron job in Supabase.`, "boss");
+    if (N.LIVE && !S.aiPaused && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add(3, "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago. It should run every 5 minutes — check the cron job in Supabase.`, "boss");
     if ((data.ai?.today || 0) >= Number(S.aiDailyLimit || 200) * 0.9) add(2, "AI daily limit almost used", `${data.ai.today || 0} of ${S.aiDailyLimit || 200} AI calls used today.`, "boss");
     for (const j of data.jobs) {
       const w = j.ai_work || {};
@@ -212,9 +212,11 @@
     const S = data.settings || {}, ch = Number(S.confirmHours || 12), rel = Number(S.releaseHours || 24) / 24, out = [];
     const add = (dept, state, pri, title, detail, go, task) => out.push({ dept, state, pri, title, detail, go, task });
     if (S.aiPaused) add("operations", "blocked", "p1", "AI Boss is paused", "New jobs wait until you resume it.", "boss");
-    if (N.LIVE && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add("operations", "blocked", "p0", "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago.`, "boss");
+    if (N.LIVE && !S.aiPaused && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add("operations", "blocked", "p0", "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago.`, "boss");
     for (const j of data.jobs) { const w = j.ai_work || {}, t = j.title, age = ago(j.updated_at || j.created_at);
-      if (j.status === "received") add("delivery", "working", "p2", t, "AI Boss is reading the request", "orders");
+      if (w.escalated || (data.ops || []).some(k => k.job_id === j.id && k.dept === "human" && k.status !== "done")) add("human", "blocked", "p1", t, "Waiting on the Human board; check assignment and availability", "human");
+      else if (Number(w.fails || 0) >= 3) add("delivery", "blocked", "p1", t, "Processing stopped after repeated errors; owner review required", "aiwork");
+      else if (j.status === "received") add("delivery", S.aiPaused ? "blocked" : "ready", "p2", t, S.aiPaused ? "Processing paused; request is queued" : "Request queued for processing", "orders");
       else if (j.status === "searching") hrs(j.updated_at || j.created_at) > 1 ? add("delivery", "blocked", "p2", t, "No expert in the network fits yet", "talent") : add("delivery", "working", "p2", t, "Looking for an expert", "orders");
       else if (j.status === "clarify") add("support", "others", "p2", t, `Waiting for ${j.client_name}'s answers (${age})`, "orders");
       else if (j.status === "ai_check") add("quality", "waiting", "p1", t, "AI sample and price to check", "aiwork");
@@ -222,7 +224,7 @@
       else if (j.status === "quoted") add("growth", "others", "p2", t, `Offer ${money(j.offer_usd)} sent, the client decides`, "orders");
       else if (j.status === "accepted" && j.payment_status === "awaiting") hrs(j.updated_at) > 24 ? add("finance", "blocked", "p2", t, "Payment not received after 24 h", "orders") : add("finance", "others", "p2", t, "Waiting for the payment", "orders");
       else if (j.status === "accepted" && j.route === "ai" && w.escalated) add("human", "blocked", "p1", t, "AI failed the quality scan twice — on the Human board", "human");
-      else if (j.status === "accepted" && j.route === "ai") Number(w.fails || 0) >= 3 ? add("delivery", "blocked", "p1", t, "The AI could not make the work", "aiwork") : w.final && !w.approved ? add("quality", "waiting", "p1", t, "Finished AI work to check, the client has paid", "aiwork") : add("delivery", "working", "p1", t, "AI is making the work", "orders");
+      else if (j.status === "accepted" && j.route === "ai") Number(w.fails || 0) >= 3 ? add("delivery", "blocked", "p1", t, "The AI could not make the work", "aiwork") : w.final && !w.approved ? add("quality", "waiting", "p1", t, "Finished AI work to check, the client has paid", "aiwork") : add("delivery", S.aiPaused ? "blocked" : "ready", "p1", t, S.aiPaused ? "Processing paused; paid work is waiting" : "Delivery queued; check the latest run", "orders");
       else if (j.status === "accepted") hrs(j.updated_at) > 168 ? add("delivery", "blocked", "p2", t, "Delivery may be late", "orders") : add("delivery", "working", "p2", t, "The expert is working", "orders");
       else if (j.status === "delivered") hrs(j.updated_at) > 24 * rel ? add("finance", "waiting", "p2", t, "Ready to release the payment", "orders") : add("finance", "others", "p2", t, "The client is reviewing the work", "orders");
       else if (j.status === "paid" && j.payout_status === "pending" && j.route !== "ai") add("finance", "waiting", "p1", t, `Payout ${money(j.quote?.providerPrice)} to ${j.quote?.talentName || "the expert"}`, "money");
@@ -405,7 +407,7 @@
         </ol>${(data.audit || []).length > (window._nHistN || 100) ? `<button class="btn btn-ghost btn-sm" id="histMore">Show 100 more</button>` : ""}
         <p class="muted" style="margin:12px 0 0">Every change by you, the AI Boss, clients and experts is recorded here and can't be edited or deleted. Secret tracking codes are never stored in the history.</p></div>`,
       profits: `<div class="kpis">
-          <div class="card kpi"><div class="lbl">Profit earned (fees)</div><div class="val">${money(earned)}</div></div>
+          <div class="card kpi"><div class="lbl">Platform revenue released</div><div class="val">${money(earned)}</div></div>
           <div class="card kpi"><div class="lbl">Fees in progress</div><div class="val">${money(pending)}</div></div>
           <div class="card kpi"><div class="lbl">Paid job volume</div><div class="val">${money(gmv)}</div></div>
           <div class="card kpi"><div class="lbl">Talent in network</div><div class="val">${data.talent.filter((t) => t.status === "active").length}</div></div></div>
@@ -461,7 +463,7 @@
           <div class="log" style="margin-top:16px">${data.log.map((l) => `<div><span class="muted">${new Date(l.at).toLocaleString()}</span> · ${esc(l.message)}</div>`).join("") || `<div class="muted">No activity yet.</div>`}</div></div>`,
     };
     dash.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:12px"><div><h1 style="font-size:2rem;margin:0">Owner dashboard</h1><p class="muted" style="margin:4px 0 0">Private — only you can see this.</p></div>
-      <span class="pill" style="margin:0"><span class="dot"></span>AI Boss ${N.LIVE ? "running in the background" : "(preview)"}</span></div>
+      <span class="pill" style="margin:0"><span class="dot"></span>AI Boss ${N.LIVE ? (data.settings?.aiPaused ? "paused" : "enabled — check last run below") : "(preview)"}</span></div>
       <div class="tabs">${[["needs", `Action needed${N_.length ? ` (${N_.length})` : ""}`], ["aiwork", `AI work${Q.length ? ` (${Q.length})` : ""}`], ["ops", "Ops board"], ["human", `Human board${H.filter((k) => k.status !== "done").length ? ` (${H.filter((k) => k.status !== "done").length})` : ""}`], ["profits", "Profits"], ["orders", `Orders & clients (${J.length})`], ["talent", `Talent (${data.talent.length})`], ["money", `Payments & payouts${pendingPayouts().length ? ` (${pendingPayouts().length})` : ""}`], ["ratings", `Ratings (${data.ratings.length})`], ["boss", "AI Boss"], ["history", "History & security"]].map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? "on" : ""}">${n}</button>`).join("")}</div>
       ${views[tab]}`;
     dash.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { tab = b.dataset.tab; window._nHold = false; draw(); }));
