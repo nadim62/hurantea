@@ -25,19 +25,6 @@
   @media (max-width:760px){.ha-btn{bottom:86px;right:12px}.ha-panel{bottom:146px;right:12px;height:min(440px,calc(100vh - 230px))}}`;
   document.head.appendChild(css);
 
-  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-  const btn = el("button", "ha-btn"); btn.type = "button"; btn.setAttribute("aria-label", t("Help assistant")); btn.title = t("Help assistant");
-  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 10a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.6"/><path d="M12 16.6h.01"/></svg>';
-  const panel = el("div", "ha-panel"); panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", t("Help assistant"));
-  const head = el("div", "ha-head"); head.append(el("b", "", t("Help assistant"))); const x = el("button", "ha-x", "×"); x.type = "button"; x.setAttribute("aria-label", t("Close")); head.append(x);
-  const log = el("div", "ha-log"); log.setAttribute("aria-live", "polite");
-  const note = el("div", "ha-note", t("Automatic help. It can't see your requests or payments. Don't share codes or card details here."));
-  const form = el("form", "ha-form"); const input = el("input"); input.type = "text"; input.maxLength = 600; input.placeholder = t("Ask about HURANTEA…"); input.setAttribute("aria-label", t("Your question"));
-  const send = el("button", "", t("Send")); send.type = "submit"; form.append(input, send);
-  const chips = el("div", "ha-chips"); FAQ.forEach((f) => { const c = el("button", "ha-chip", t(f.k)); c.type = "button"; c.onclick = () => { if (busy) return; add("user", t(f.k)); add("assistant", t(f.a)); }; chips.append(c); });
-  panel.append(head, log, chips, note, form); document.body.append(btn, panel);
-
-
   // Built-in answers: no server call, no cost. Each topic: keywords (any language welcome) + answer.
   const FAQ = [
     { k: "Post a job", w: ["post", "start", "how do i", "how does", "how it works", "work", "order", "request", "hire", "need", "begin", "job"], a: "Describe your job in the box on the home page, in any language. Posting is free and needs no account. HURANTEA's AI does the job itself when it can and shows you a free sample first; other jobs go to one verified human expert." },
@@ -57,6 +44,19 @@
     if (/(?:\d[ -]?){12,19}/.test(q)) return t("Please don't share card numbers or codes here. Card details are only entered on the secure payment page.");
     return best ? t(best.a) : t("I don't have an answer for that. Pick a topic below, or describe what you need in the box on the home page: posting is free and you see a fixed price before any work starts.");
   };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const btn = el("button", "ha-btn"); btn.type = "button"; btn.setAttribute("aria-label", t("Help assistant")); btn.title = t("Help assistant");
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M9.5 10a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.6"/><path d="M12 16.6h.01"/></svg>';
+  const panel = el("div", "ha-panel"); panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", t("Help assistant"));
+  const head = el("div", "ha-head"); head.append(el("b", "", t("Help assistant"))); const x = el("button", "ha-x", "×"); x.type = "button"; x.setAttribute("aria-label", t("Close")); head.append(x);
+  const log = el("div", "ha-log"); log.setAttribute("aria-live", "polite");
+  const note = el("div", "ha-note", t("Automatic help. It can't see your requests or payments. Don't share codes or card details here."));
+  const form = el("form", "ha-form"); const input = el("input"); input.type = "text"; input.maxLength = 600; input.placeholder = t("Ask about HURANTEA…"); input.setAttribute("aria-label", t("Your question"));
+  const send = el("button", "", t("Send")); send.type = "submit"; form.append(input, send);
+  const chips = el("div", "ha-chips"); FAQ.forEach((f) => { const c = el("button", "ha-chip", t(f.k)); c.type = "button"; c.onclick = () => { if (busy) return; add("user", t(f.k)); add("assistant", t(f.a)); }; chips.append(c); });
+  panel.append(head, log, chips, note, form); document.body.append(btn, panel);
+
+
   const hist = []; let busy = false, greeted = false;
   const add = (role, text) => { const m = el("div", "ha-m " + (role === "user" ? "ha-u" : "ha-a"), text); log.append(m); log.scrollTop = log.scrollHeight; return m; };
   const toggle = (open) => { panel.classList.toggle("open", open); if (open) { if (!greeted) { greeted = true; add("assistant", t("Hi! I'm HURANTEA's help assistant. Type a question or pick a topic below.")); } input.focus(); } };
