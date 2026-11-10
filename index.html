@@ -540,7 +540,7 @@
       const AIST = { quoted: ["Offer ready", "ok", "Your free sample and fixed-price offer are ready."], accepted: ["In progress", "", "HURANTEA's AI is making your full work. It is checked before you get it."], delivered: ["Delivered", "ok", "Your work is ready below. Please review it."] };
       const st = (ai && AIST[r.status]) || STATUS[r.status] || [r.status, "", ""]; const idx = STEPS.indexOf(["searching", "ai_check"].includes(r.status) ? "asking" : r.status === "clarify" ? "received" : r.status);
       const box2 = (inner) => `<div class="card" style="margin-top:14px;padding:14px;background:var(--surface2);box-shadow:none">${inner}</div>`;
-      const pre = (t) => `<pre class="ai-out" style="white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;margin:8px 0 0;font-size:.84rem;line-height:1.55">${esc(t)}</pre>`;
+      const pre = (t) => `<pre class="ai-out" style="white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;margin:8px 0 0;font-size:.84rem;line-height:1.55">${esc(t).replace(/\*\*(\S(?:[^*\n]*\S)?)\*\*/g, "<b>$1</b>")}</pre>`;
       return `<div class="card" style="margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><div><h3 style="margin:0">${esc(r.title)}</h3>
           <div class="muted" style="font-size:.85rem">Sent ${new Date(r.created_at).toLocaleString()}</div>${ai ? `<div class="muted" style="font-size:.85rem">Made by HURANTEA AI</div>` : ""}</div><span class="tag ${st[1]}">${st[0]}</span></div>
