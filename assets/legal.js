@@ -6,7 +6,7 @@
   const op = C.operatorName ? String(C.operatorName).replace(/[<>&"]/g, "") : "the operator of HURANTEA";
   const mail = C.contactEmail ? String(C.contactEmail).replace(/[<>&"]/g, "") : "";
   const contact = mail ? `<a href="mailto:${mail}">${mail}</a>` : "the contact address published on this website";
-  const updated = "29 October 2026";
+  const updated = "10 November 2026";
   const toc = (items) => `<nav class="legal-toc" aria-label="Contents">${items.map(([id, t], i) => `<a href="#/${'{R}'}#${id}"><span>${String(i + 1).padStart(2, "0")}</span>${t}</a>`).join("")}</nav>`;
   const sec = (id, n, t, body) => `<section id="${id}"><h2><span class="legal-n">${String(n).padStart(2, "0")}</span>${t}</h2>${body}</section>`;
 
@@ -47,7 +47,8 @@
     <article>
       <span class="eyebrow">Legal</span><h1>${title}</h1>
       <p class="muted">Last updated: <span data-no-i18n>${updated}</span></p>
-      <div class="legal-note card"><b>Draft for review.</b> This text describes how HURANTEA works and is being reviewed by a lawyer before launch. The English version is the binding one; translations are for convenience only.</div>
+      <div class="legal-note card"><b>Draft for review.</b> This draft needs review before launch. Payment descriptions below explain the intended workflow; they do not confirm an active payment service. The English version is the binding one; translations are for convenience only.</div>
+      ${!C.cardPayments ? `<div class="legal-note card"><b>Payment availability:</b> Online card checkout is currently unavailable. Contact ${contact} before paying. No automatic refund or payout should be assumed from this draft.</div>` : ""}
       <p class="lead">${intro}</p>
       <div data-no-i18n>${list.map(([id, t, b], i) => sec(id, i + 1, t, b)).join("")}</div>
     </article></div></div>`;
