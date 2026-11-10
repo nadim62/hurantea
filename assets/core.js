@@ -315,6 +315,7 @@
         const c = j.candidates.find((x) => x.state === "accepted"); if (c) c.state = "client_declined"; await wait(300); const r = askNext(j); commit("client"); return r; },
       async confirmDelivery(token) { const j = db.jobs.find((x) => x.token === token && x.status === "delivered" && x.payment_status === "held"); if (!j) return "unchanged"; j.status = "paid"; j.payment_status = "released"; if (j.talent_id) j.payout_status = "pending"; j.updated_at = now(); commit("client"); return "confirmed"; },
       async reportProblem(token, text) { const j = db.jobs.find((x) => x.token === token && x.status === "delivered" && !x.problem_at); if (!j) return "unchanged"; j.problem_at = now(); j.problem_text = String(text).slice(0, 1000); commit("client"); return "reported"; },
+      async appeal(token, text) { const j = db.jobs.find((x) => x.token === token && x.status === "rejected"); if (!j) return "unchanged"; j.status = "received"; j.description += "\n\nClient reply: " + text; j.offer_text = null; j.updated_at = now(); commit("client"); return "sent"; },
       async cancel(token) { const j = db.jobs.find((x) => x.token === token && ["received", "searching", "clarify", "ai_check", "asking", "quoted", "no_match"].includes(x.status)); if (!j) return "unchanged"; Object.assign(j, { status: "cancelled", offer_usd: null, updated_at: now() }); commit("client"); return "cancelled"; },
       async respond(token, accept) { const j = db.jobs.find((x) => x.token === token && x.status === "quoted"); if (j) { j.status = accept ? "accepted" : "declined"; if (accept) j.payment_status = "awaiting"; j.updated_at = now(); commit("client");
           // preview: pretend the client paid, so the whole AI flow can be tried (live: the payment provider confirms it)
@@ -376,6 +377,13 @@
       async expertRespond(key, accept) { await ready; return ok(await sb.rpc("expert_respond", { p_key: key, p_accept: accept })); },
       async clientNext(token) { await ready; return ok(await sb.rpc("client_next", { p_token: token })); },
       async cancel(token) { await ready; return ok(await sb.rpc("cancel_request", { p_token: token })); },
+      // APPEAL-001: answer a "not accepted" request, optionally with documents, and have it checked again
+      async appeal(token, text, files) { await ready; const dir = crypto.randomUUID(), up = [];
+        for (const f of [...(files || [])].slice(0, 5)) { if (f.size > 10485760) throw new Error(f.name + " is larger than 10 MB.");
+          const path = `req/${dir}/${Date.now().toString(36)}-${f.name.replace(/[^\w.\-]+/g, "_").slice(-80)}`;
+          const r = await sb.storage.from("job-files").upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
+          if (r.error) throw new Error("Could not upload " + f.name + ": " + r.error.message); up.push({ path, name: f.name, size: f.size, type: f.type }); }
+        return ok(await sb.rpc("client_appeal", { p_token: token, p_text: text, p_dir: up.length ? dir : null, p_files: up })); },
       async confirmDelivery(token) { await ready; return ok(await sb.rpc("client_confirm", { p_token: token })); },
       async reportProblem(token, text) { await ready; return ok(await sb.rpc("client_problem", { p_token: token, p_text: text })); },
       async clientHuman(token) { await ready; return ok(await sb.rpc("client_human", { p_token: token })); },

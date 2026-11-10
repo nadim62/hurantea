@@ -81,7 +81,7 @@
 
 <script src="config.js?v=20261110c"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110h"></script>
+<script src="assets/core.js?v=20261110j"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -558,7 +558,14 @@
           <div class="muted" style="font-size:.85rem">Sent ${new Date(r.created_at).toLocaleString()}</div>${ai ? `<div class="muted" style="font-size:.85rem">Made by HURANTEA AI</div>` : ""}</div><span class="tag ${st[1]}">${st[0]}</span></div>
         ${idx >= 0 ? `<div class="timeline">${STEPS.map((_, i) => `<span class="${i <= idx ? "on" : ""}"></span>`).join("")}</div>` : ""}
         <p class="muted" style="margin-bottom:8px">${esc(st[2])}</p>
-        ${r.offer_text && r.offer_text !== st[2] && !["asking", "no_match", "cancelled", "ai_check", "clarify"].includes(r.status) && (!ai || r.status === "quoted") ? `<p>${esc(r.offer_text)}</p>` : ""}
+        ${r.offer_text && r.offer_text !== st[2] && !["asking", "no_match", "cancelled", "ai_check", "clarify", "rejected"].includes(r.status) && (!ai || r.status === "quoted") ? `<p>${esc(r.offer_text)}</p>` : ""}
+        ${r.status === "rejected" ? (() => { const why = String(r.offer_text || "").replace(/^Sorry, we can't take on this request\.?\s*/i, "").trim();
+          return box2(`<b>Why it was not accepted</b><p style="margin:6px 0 0;white-space:pre-wrap">${why ? esc(why) : N.t("No details were recorded for this request.")}</p>`) +
+            box2(`<b>Fix it and send it again</b><p class="muted" style="margin:6px 0 0">Answer the point above, correct your request, or add a document (for example proof that the website or material is yours). We check it again, free of charge.</p>
+              <label style="display:block;margin-top:10px">Your answer or correction<textarea data-appealbox="${esc(c.token)}" maxlength="2000" style="min-height:90px" placeholder="For example: This is my own website. I am the owner of the restaurant."></textarea></label>
+              <label style="display:block;margin-top:10px">Documents <span class="hint">Optional. Up to 5 files, 10 MB each.</span><input type="file" data-appealfiles="${esc(c.token)}" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx,.xls,.xlsx"></label>
+              <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-appeal="${esc(c.token)}">Send for a new check</button><button class="btn btn-ghost" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Post as a new request</button></div>
+              <p class="hint" style="margin-top:8px">A request can be checked again twice.</p>`); })() : ""}
         ${r.offer_usd != null && ["quoted", "accepted", "delivered", "paid"].includes(r.status) ? `<div class="price">${money(r.offer_usd)} <span class="muted" style="font-size:.9rem;font-weight:500">${ai ? "fixed price · made by HURANTEA AI" : "fixed price · confirmed by the expert"}</span></div>` : ""}
         ${ai && r.sample && r.status === "quoted" ? box2(`<b>Free sample</b><div class="muted" style="font-size:.86rem">A short piece of your work, so you can judge it before you pay.</div>${pre(r.sample)}`) : ""}
         ${r.status === "quoted" && ai ? `<div class="cta-row" style="margin-top:14px"><button class="btn btn-primary" data-acc="${esc(c.token)}">Accept & continue to payment</button><button class="btn btn-ghost" data-human="${esc(c.token)}">Ask a human expert instead</button><button class="btn btn-ghost" data-dec="${esc(c.token)}">Decline</button></div>
@@ -603,6 +610,14 @@
       try { const r = await api.confirmDelivery(b.dataset.confirm); toast(r === "confirmed" ? "Delivery confirmed. Thank you!" : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-problem]").forEach((b) => (b.onclick = async () => { const t = prompt(N.t("What is wrong with the work? Please describe it in a few words.")); if (t == null) return; if (t.trim().length < 5) return toast("Please describe the problem in a few words.");
       b.disabled = true; try { const r = await api.reportProblem(b.dataset.problem, t.trim()); toast(r === "reported" ? "Problem reported. Your payment stays on hold." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-appeal]").forEach((b) => (b.onclick = async () => { const tk = b.dataset.appeal, ta = box.querySelector(`[data-appealbox="${tk}"]`), fi = box.querySelector(`[data-appealfiles="${tk}"]`);
+      const t = (ta ? ta.value : "").trim(), files = fi ? [...fi.files] : [];
+      if (t.length < 5 && !files.length) return toast("Please write your answer or add a document.");
+      if (files.length > 5) return toast("Please add at most 5 files.");
+      b.disabled = true; const t0 = b.textContent; b.textContent = N.t("Sending…");
+      try { const r = await api.appeal(tk, t, files);
+        toast(r === "sent" ? "Sent. We are checking your request again." : r === "limit" ? "This request was already checked again twice. Please post it as a new request." : r === "too_many_files" ? "This request already has too many files." : r === "too_short" ? "Please write your answer or add a document." : "Nothing changed."); }
+      catch (e) { toast(e.message); b.disabled = false; b.textContent = t0; return; } renderReqs(); }));
     box.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Cancel this request? The expert will not start work."))) return; b.disabled = true;
       try { await api.cancel(b.dataset.cancel); toast("Request cancelled."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-again]").forEach((b) => (b.onclick = () => {
