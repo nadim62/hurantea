@@ -310,9 +310,9 @@
           </form></div>
         <div class="card"><h3>Connections</h3>
           <div class="side-list" style="margin-top:10px">
-            <div>${N.ICONS.card}<span><b>Stripe (client payments)</b><span class="tag warn" style="margin-left:6px">Not connected</span><br><span class="muted" style="font-size:.88rem">Create a Stripe account for your Dubai company, then add the keys to connect checkout and hold-until-delivery payments.</span></span></div>
+            <div>${N.ICONS.card}<span><b>Stripe (client payments)</b><span class="tag warn" style="margin-left:6px">Not connected</span><br><span class="muted" style="font-size:.88rem">Clients pay by card on Stripe&#39;s secure page; HURANTEA marks the money as held automatically. To switch it on: create a Stripe account, then add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in Supabase (see SETUP.md, step 4).</span></span></div>
             <div>${N.ICONS.wallet}<span><b>${{ payoneer: "Payoneer", wise: "Wise Business", bank: "Bank" }[S.payoutProvider] || "Payoneer"} (freelancer payouts)</b><span class="tag warn" style="margin-left:6px">Not connected</span><br><span class="muted" style="font-size:.88rem">Until connected, the AI prepares each payout below and you send it in one click from your account.</span></span></div>
-            <div>${N.ICONS.shield}<span><b>Your profit → your bank</b><br><span class="muted" style="font-size:.88rem">Stripe pays your 15% fees automatically to your UAE business bank account on its payout schedule.</span></span></div>
+            <div>${N.ICONS.shield}<span><b>Your profit → your bank</b><br><span class="muted" style="font-size:.88rem">Stripe sends your balance to your business bank account on its payout schedule; you pay experts their share from there.</span></span></div>
           </div></div>
       </div>
       <div class="card tablewrap" style="margin-top:14px"><h3>Payouts to send</h3><table><thead><tr><th>Freelancer</th><th>Pay to</th><th>Amount</th><th>Job</th><th></th></tr></thead><tbody>

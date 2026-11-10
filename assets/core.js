@@ -387,6 +387,10 @@
       async fileUrl(f) { await ready; const r = await sb.storage.from("job-files").createSignedUrl(f.path, 3600); if (r.error) throw new Error(r.error.message); return r.data.signedUrl; },
       async addOpsTask(t) { await ready; ok(await sb.from("ops_tasks").insert(t)); },
       async updateOpsTask(i, patch) { await ready; ok(await sb.from("ops_tasks").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", i)); },
+      async pay(token) {   // PAY-001: opens Stripe's secure card page; the amount is taken from the database, not from here
+        const r = await fetch(fn("pay"), { method: "POST", headers: { "content-type": "application/json", apikey: C.supabaseAnonKey, authorization: "Bearer " + C.supabaseAnonKey }, body: JSON.stringify({ token }) });
+        const d = await r.json().catch(() => ({})); if (!r.ok || !d.url) throw new Error(d.error || "Please try again."); return d.url;
+      },
       async academy(body) {
         const r = await fetch(fn("academy"), { method: "POST", headers: { "content-type": "application/json", apikey: C.supabaseAnonKey, authorization: "Bearer " + C.supabaseAnonKey }, body: JSON.stringify(body) });
         const d = await r.json().catch(() => ({})); if (!r.ok || d.error) throw new Error(d.error || "Please try again."); return d;

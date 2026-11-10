@@ -518,6 +518,8 @@
       draw();
     },
     track() {
+      const pq = new URLSearchParams(location.search).get("paid");   // PAY-001: back from the card payment page
+      if (pq) { toast(pq === "1" ? N.t("Thank you — payment received. It shows here within a minute.") : N.t("Payment cancelled. You can pay whenever you are ready.")); history.replaceState(null, "", location.pathname + location.hash); }
       const f = document.getElementById("trackForm");
       f.onsubmit = (e) => { e.preventDefault(); const c = f.elements.code.value.trim(); if (!c) return; addCode(c, "Request"); renderReqs(); f.reset(); };
       renderReqs();
@@ -555,7 +557,7 @@
         ${r.status === "asking" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> Waiting for the expert's confirmation. You'll only see a price an expert has agreed to.</div>` : ""}
         ${r.status === "no_match" ? `<p class="muted">You can change the request and post it again, or cancel it. We never hand it to someone you haven't approved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Edit and post again</button><button class="btn btn-ghost" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
         ${["received", "searching", "clarify", "asking", "ai_check"].includes(r.status) ? `<div style="margin-top:10px"><button class="linkbtn" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
-        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">We'll send a secure card payment link to your contact. Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? "" : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
+        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? "Pay securely by card. " : "We'll send a secure card payment link to your contact. "}Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button></div>` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
         ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery.</p>` : ""}
         ${ai && r.status === "accepted" && r.payment_status === "held" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
         ${ai && r.deliverable ? box2(`<b>Your finished work</b>${pre(r.deliverable)}<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>
@@ -574,6 +576,8 @@
       try { const r = await api.clientHuman(b.dataset.human); toast(r === "asking" ? "Asking a verified expert to confirm." : r === "unchanged" ? "Nothing changed." : "We'll find a verified expert for you."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-next]").forEach((b) => (b.onclick = async () => { b.disabled = true;
       try { const r = await api.clientNext(b.dataset.next); toast(r === "asking" ? "Asking the next expert to confirm." : r === "no_match" ? "No other expert could confirm yet." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-pay]").forEach((b) => (b.onclick = async () => { b.disabled = true; const t0 = b.textContent; b.textContent = N.t("Opening the secure payment page…");
+      try { location.href = await api.pay(b.dataset.pay); } catch (e) { toast(e.message); b.disabled = false; b.textContent = t0; } }));
     box.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Cancel this request? The expert will not start work."))) return; b.disabled = true;
       try { await api.cancel(b.dataset.cancel); toast("Request cancelled."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-again]").forEach((b) => (b.onclick = () => {
