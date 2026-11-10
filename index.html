@@ -79,7 +79,7 @@
 
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
 
-<script src="config.js?v=20261110"></script>
+<script src="config.js?v=20261110b"></script>
 <script src="assets/bright.js"></script>
 <script src="assets/core.js"></script>
 <script src="assets/i18n.js"></script>
@@ -95,6 +95,7 @@
 <script>
 (function () {
   const { api, esc, money, toast, STATUS, STEPS, store, FEE } = N;
+  const CFGP = window.HURANTEA_CONFIG || {};
   const app = document.getElementById("app");
   document.getElementById("yr").textContent = new Date().getFullYear();
   { const cl = document.getElementById("contactLine"), bits = [];
@@ -557,7 +558,7 @@
         ${r.status === "asking" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> Waiting for the expert's confirmation. You'll only see a price an expert has agreed to.</div>` : ""}
         ${r.status === "no_match" ? `<p class="muted">You can change the request and post it again, or cancel it. We never hand it to someone you haven't approved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Edit and post again</button><button class="btn btn-ghost" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
         ${["received", "searching", "clarify", "asking", "ai_check"].includes(r.status) ? `<div style="margin-top:10px"><button class="linkbtn" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
-        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? "Pay securely by card. " : "We'll send a secure card payment link to your contact. "}Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button></div>` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
+        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? (CFGP.cardPayments ? "Pay securely by card. " : "") : "We'll send a secure card payment link to your contact. "}Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px">${CFGP.cardPayments ? `<button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button>` : ""}${CFGP.paypalLink ? `<a class="btn ${CFGP.cardPayments ? "btn-ghost" : "btn-primary"}" target="_blank" rel="noopener" href="${esc(CFGP.paypalLink.replace(/\/+$/, "") + "/" + Number(r.offer_usd).toFixed(2) + "USD")}">Pay ${money(r.offer_usd)} with PayPal</a>` : ""}</div>${CFGP.paypalLink ? `<p class="hint" style="margin-top:8px">${N.t("In the PayPal note, write the title of your job. We confirm your payment within a few hours and the work starts automatically.")}</p>` : ""}${!CFGP.paypalLink && !CFGP.cardPayments ? `<p class="hint">${N.t("We'll send you a payment link shortly.")}</p>` : ""}` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
         ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery.</p>` : ""}
         ${ai && r.status === "accepted" && r.payment_status === "held" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
         ${ai && r.deliverable ? box2(`<b>Your finished work</b>${pre(r.deliverable)}<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>

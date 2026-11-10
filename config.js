@@ -8,6 +8,8 @@ window.HURANTEA_CONFIG = {
   siteUrl: "https://hurantea.com",          // your public site, e.g. "https://hurantea.com" — used for the expert links sent from the owner area
   // operatorName above: your company's legal name, e.g. "HURANTEA FZ-LLC, Dubai" — shown as "Operated by …"
   vapidPublicKey: "",   // push notifications for you and your staff: the public VAPID key (see SETUP.md)
+  paypalLink: "",      // your PayPal.me link, e.g. "https://paypal.me/yourname" — clients pay here, you click "Payment received" in the owner area
+  cardPayments: false, // set to true once Stripe is connected
   feeRate: 0.15,
   goalUSD: 1000000000,
   goalDate: "2027-12-31",
