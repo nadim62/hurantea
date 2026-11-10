@@ -658,9 +658,11 @@
     app.innerHTML = pages[r](); wire[r]?.();
     if (N.LIVE && ["home", "post", "track", "payments", "academy"].includes(r)) {
       const availability = document.createElement("p"); availability.className = "muted"; availability.setAttribute("role", "status"); availability.id = "serviceAvailability";
-      availability.style.cssText = "max-width:1080px;margin:12px auto;padding:10px 20px;font-size:.88rem";
-      availability.textContent = "Checking request-processing availability…"; app.prepend(availability);
-      api.platformStatus().then(h => { if (!availability.isConnected) return; availability.textContent = h.processing === "available" ? "Requests are being processed. Offers may need owner review before they appear." : h.processing === "paused" ? "Processing is temporarily paused. Requests can be saved, but no new AI work starts until processing resumes." : "Requests can be saved. Processing availability is not confirmed; contact support if you need an update."; }).catch(() => { if (availability.isConnected) availability.textContent = "Processing availability could not be checked. Contact support for help."; });
+      availability.style.cssText = "grid-column:1/-1;margin:12px 0 20px;padding:10px 12px;border-left:2px solid currentColor;font-size:.88rem;line-height:1.5";
+      availability.textContent = "Checking request-processing availability…";
+      if (r === "home") app.querySelector(".os-copy").insertBefore(availability, app.querySelector(".cmd-label"));
+      else (app.querySelector(".page > .wrap") || app).prepend(availability);
+      api.platformStatus().then(h => { if (!availability.isConnected) return; availability.textContent = h.processing === "available" ? "Requests are processing. Offers may need owner review." : h.processing === "paused" ? "Processing paused. You can save a request; new AI work starts only after processing resumes." : "Requests can be saved. Processing availability is not confirmed; contact support if you need an update."; }).catch(() => { if (availability.isConnected) availability.textContent = "Processing availability could not be checked. Contact support for help."; });
     }
     document.querySelectorAll("[data-r]").forEach((a) => a.classList.toggle("on", a.dataset.r === r));
     links.classList.remove("open");
