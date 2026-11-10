@@ -116,7 +116,7 @@
       ],
       jobs: [], log: [{ at: now(), message: "Preview mode: sample data only, nothing is saved." }],
       ratings: [], ops_tasks: [], staff: [],
-      settings: { paymentProvider: "stripe", currency: "USD", payoutProvider: "payoneer", payoutSchedule: "weekly", autoPayoutLimit: 0, releaseAfterDays: 7,
+      settings: { paymentProvider: "stripe", currency: "USD", payoutProvider: "payoneer", payoutSchedule: "weekly", autoPayoutLimit: 0, releaseHours: 24,
         aiFirst: true, aiReview: true, aiKinds: ["writing", "translation", "website", "spreadsheet", "research", "code"], aiPricePct: 50, aiMinPrice: 5, typicalRate: 15 },
     };
     // BACKOFFICE-001 preview history: compare every row before/after each action, like the database trigger does
@@ -313,6 +313,8 @@
       async expertRespond(key, accept) { await wait(300); const r = expertRespond(key, accept); commit("expert"); return r; },
       async clientNext(token) { const j = db.jobs.find((x) => x.token === token && x.status === "quoted"); if (!j) return "unchanged";
         const c = j.candidates.find((x) => x.state === "accepted"); if (c) c.state = "client_declined"; await wait(300); const r = askNext(j); commit("client"); return r; },
+      async confirmDelivery(token) { const j = db.jobs.find((x) => x.token === token && x.status === "delivered" && x.payment_status === "held"); if (!j) return "unchanged"; j.status = "paid"; j.payment_status = "released"; if (j.talent_id) j.payout_status = "pending"; j.updated_at = now(); commit("client"); return "confirmed"; },
+      async reportProblem(token, text) { const j = db.jobs.find((x) => x.token === token && x.status === "delivered" && !x.problem_at); if (!j) return "unchanged"; j.problem_at = now(); j.problem_text = String(text).slice(0, 1000); commit("client"); return "reported"; },
       async cancel(token) { const j = db.jobs.find((x) => x.token === token && ["received", "searching", "clarify", "ai_check", "asking", "quoted", "no_match"].includes(x.status)); if (!j) return "unchanged"; Object.assign(j, { status: "cancelled", offer_usd: null, updated_at: now() }); commit("client"); return "cancelled"; },
       async respond(token, accept) { const j = db.jobs.find((x) => x.token === token && x.status === "quoted"); if (j) { j.status = accept ? "accepted" : "declined"; if (accept) j.payment_status = "awaiting"; j.updated_at = now(); commit("client");
           // preview: pretend the client paid, so the whole AI flow can be tried (live: the payment provider confirms it)
@@ -374,6 +376,8 @@
       async expertRespond(key, accept) { await ready; return ok(await sb.rpc("expert_respond", { p_key: key, p_accept: accept })); },
       async clientNext(token) { await ready; return ok(await sb.rpc("client_next", { p_token: token })); },
       async cancel(token) { await ready; return ok(await sb.rpc("cancel_request", { p_token: token })); },
+      async confirmDelivery(token) { await ready; return ok(await sb.rpc("client_confirm", { p_token: token })); },
+      async reportProblem(token, text) { await ready; return ok(await sb.rpc("client_problem", { p_token: token, p_text: text })); },
       async clientHuman(token) { await ready; return ok(await sb.rpc("client_human", { p_token: token })); },
       async clientAnswer(token, answer) { await ready; return ok(await sb.rpc("client_answer", { p_token: token, p_answer: answer })); },
       async opsTasks() { await ready; return ok(await sb.from("ops_tasks").select("*").order("created_at", { ascending: false }).limit(500)); },

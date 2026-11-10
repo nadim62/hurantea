@@ -81,19 +81,19 @@
 
 <script src="config.js?v=20261110c"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110d"></script>
+<script src="assets/core.js?v=20261110h"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
 <script src="assets/hud.js"></script>
 <script src="assets/fx.js"></script>
 <script src="assets/suggest.js"></script>
-<script src="assets/assist.js?v=20261110g"></script>
+<script src="assets/assist.js?v=20261110h"></script>
 <script src="assets/consent.js?v=20261110a"></script>
 <script src="assets/motion.js"></script>
 <script src="assets/core3d.js"></script>
 <script src="assets/estimate.js"></script>
-<script src="assets/legal.js"></script>
+<script src="assets/legal.js?v=20261110h"></script>
 <script>
 (function () {
   const { api, esc, money, toast, STATUS, STEPS, store, FEE } = N;
@@ -302,7 +302,7 @@
           <div class="card"><div class="step-n">${ic("wallet")}</div><h3>For experts: how you get paid</h3>
             <ol style="padding-left:20px;line-height:1.9;margin:0">
               <li>Do the work and deliver it.</li>
-              <li>The client confirms (or 7 days pass with no complaint).</li>
+              <li>The client confirms (or 24 hours pass with no problem reported).</li>
               <li>We send your full rate to your <b>Payoneer, Wise or bank account</b>.</li></ol>
             <p class="muted" style="margin:12px 0 0">You always receive your own rate in full — our fee is paid by the client on top.</p></div>
         </div>
@@ -500,7 +500,19 @@
       const draw = async () => {
         let o = null; if (/^[0-9a-f-]{36}$/i.test(key)) { try { o = await api.expertOffer(key); } catch (e) { toast(e.message); } }
         if (!o) return closed("This link is not valid. Please check that you copied the whole link.");
-        if (o.state === "accepted") { box.innerHTML = `<span class="tag ok">${N.t("Confirmed")}</span><h1 style="font-size:1.6rem;margin-top:10px">${esc(o.title)}</h1><p>${N.t("Thank you — you confirmed this job. The client now sees your fixed price and decides. We'll contact you as soon as they accept.")}</p>`; return; }
+        if (o.state === "accepted") {
+          const js = o.job_status, jp = o.job_payment, when = o.release_at ? new Date(o.release_at).toLocaleString() : "";
+          const st = !js || js === "quoted" ? ["Waiting for the client", "warn", "Thank you — you confirmed this job. The client now sees your fixed price and decides. We'll contact you as soon as they accept."]
+            : js === "accepted" && jp === "awaiting" ? ["Client accepted", "warn", "The client accepted your price. Please wait: do not start until the payment is received."]
+            : js === "accepted" && jp === "held" ? ["Paid: start the work", "ok", "The client has paid and HURANTEA holds the payment. Please do the work and deliver it."]
+            : js === "delivered" && o.on_hold ? ["On hold", "bad", "The client reported a problem with the delivery. Your payment is on hold while we check it. We will contact you."]
+            : js === "delivered" ? ["Delivered", "ok", "The work is delivered. Your pay is released when the client confirms" + (when ? ", or automatically on " + when + " if no problem is reported." : ".")]
+            : js === "paid" && o.job_payout === "sent" ? ["Paid out", "ok", "Your pay has been sent to your payout method. Thank you!"]
+            : js === "paid" ? ["Released", "ok", "Delivery is confirmed and your pay is released. We are sending it to your payout method."]
+            : ["Closed", "", "This job was closed. Thank you."];
+          box.innerHTML = `<span class="tag ${st[1]}">${N.t(st[0])}</span><h1 style="font-size:1.6rem;margin-top:10px">${esc(o.title)}</h1><p>${N.t(st[2])}</p>
+            <div class="pay">${money(o.pay_usd)}</div><p class="hint" style="margin-top:2px">${N.t("Your pay for this job.")}</p><p class="hint">${N.t("Keep this link: it always shows the current status of this job.")}</p>`;
+          clearTimeout(window._exT); window._exT = setTimeout(() => { if (location.hash.startsWith("#/expert/")) draw(); }, 60000); return; }
         if (o.state !== "asking") return closed(o.state === "expired" ? "The time to answer has passed, so we asked another expert. Thank you." : "Thank you. This job is no longer waiting for your answer.");
         box.innerHTML = `<span class="tag warn">${N.t("New job for you")}</span>
           <h1 style="font-size:1.7rem;margin:10px 0 6px">${esc(o.title)}</h1>
@@ -561,10 +573,16 @@
         ${r.status === "no_match" ? `<p class="muted">You can change the request and post it again, or cancel it. We never hand it to someone you haven't approved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Edit and post again</button><button class="btn btn-ghost" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
         ${["received", "searching", "clarify", "asking", "ai_check"].includes(r.status) ? `<div style="margin-top:10px"><button class="linkbtn" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
         ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? (CFGP.cardPayments ? "Pay securely by card. " : "") : "We'll send a secure card payment link to your contact. "}Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px">${CFGP.cardPayments ? `<button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button>` : ""}${CFGP.paypalLink ? `<a class="btn ${CFGP.cardPayments ? "btn-ghost" : "btn-primary"}" target="_blank" rel="noopener" href="${esc(CFGP.paypalLink.replace(/\/+$/, "") + "/" + Number(r.offer_usd).toFixed(2) + "USD")}">Pay ${money(r.offer_usd)} with PayPal</a>` : ""}</div>${CFGP.paypalLink ? `<p class="hint" style="margin-top:8px">${N.t("In the PayPal note, write the title of your job. We confirm your payment within a few hours and the work starts automatically.")}</p>` : ""}${!CFGP.paypalLink && !CFGP.cardPayments ? `<p class="hint">${N.t("We'll send you a payment link shortly.")}</p>` : ""}` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
-        ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery.</p>` : ""}
+        ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery is confirmed.</p>` : ""}
         ${ai && r.status === "accepted" && r.payment_status === "held" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
-        ${ai && r.deliverable ? box2(`<b>Your finished work</b>${pre(r.deliverable)}<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>
-          <p class="muted" style="margin:10px 0 0;font-size:.86rem">Something not right? Tell us within 7 days and we fix it, or a human expert takes over.</p>${N.C.contactEmail ? `<p style="margin:6px 0 0;font-size:.86rem"><a href="mailto:${esc(N.C.contactEmail)}?subject=${encodeURIComponent("Change request: " + r.title)}">Ask for a change</a></p>` : ""}`) : ""}
+        ${ai && r.deliverable ? box2(`<b>${r.locked ? "Your finished work: preview" : "Your finished work"}</b>${pre(r.deliverable)}
+          ${r.locked ? `<p class="muted" style="margin:8px 0 0;font-size:.86rem">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} This is the first part (about ${esc(r.preview_pct)}%). Confirm delivery to unlock the full work, with copy and download.</p>` : ""}
+          ${r.status === "paid" ? `<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>` : ""}`) : ""}
+        ${r.status === "delivered" && r.payment_status === "held" ? box2(r.problem_at
+          ? `<b>Problem reported</b><p class="muted" style="margin:6px 0 0">Thank you. We are checking it and will contact you. Your payment stays on hold until this is solved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-ghost btn-sm" data-confirm="${esc(c.token)}">It's fine now: confirm delivery</button></div>`
+          : `<b>${ai ? "Happy with the work?" : "Your expert has delivered the work"}</b><p class="muted" style="margin:6px 0 0">${ai ? "Confirm delivery to get the full work." : "Please check what you received and confirm delivery."} Confirming is final: the payment is released and can't be refunded.${r.release_at ? " If we don't hear from you, the payment is released automatically on " + esc(new Date(r.release_at).toLocaleString()) + "." : ""}</p>
+             <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-confirm="${esc(c.token)}">Confirm delivery</button><button class="btn btn-ghost" data-problem="${esc(c.token)}">Report a problem</button></div>`) : ""}
+        ${r.status === "paid" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Delivery confirmed. This job is complete.</p>` : ""}
         ${["received", "searching"].includes(r.status) ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> AI is working on it — this page updates by itself.</div>` : ""}
       </div>`;
     }).join("");
@@ -581,6 +599,10 @@
       try { const r = await api.clientNext(b.dataset.next); toast(r === "asking" ? "Asking the next expert to confirm." : r === "no_match" ? "No other expert could confirm yet." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-pay]").forEach((b) => (b.onclick = async () => { b.disabled = true; const t0 = b.textContent; b.textContent = N.t("Opening the secure payment page…");
       try { location.href = await api.pay(b.dataset.pay); } catch (e) { toast(e.message); b.disabled = false; b.textContent = t0; } }));
+    box.querySelectorAll("[data-confirm]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Confirm delivery? This is final: the payment is released and can't be refunded."))) return; b.disabled = true;
+      try { const r = await api.confirmDelivery(b.dataset.confirm); toast(r === "confirmed" ? "Delivery confirmed. Thank you!" : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
+    box.querySelectorAll("[data-problem]").forEach((b) => (b.onclick = async () => { const t = prompt(N.t("What is wrong with the work? Please describe it in a few words.")); if (t == null) return; if (t.trim().length < 5) return toast("Please describe the problem in a few words.");
+      b.disabled = true; try { const r = await api.reportProblem(b.dataset.problem, t.trim()); toast(r === "reported" ? "Problem reported. Your payment stays on hold." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Cancel this request? The expert will not start work."))) return; b.disabled = true;
       try { await api.cancel(b.dataset.cancel); toast("Request cancelled."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-again]").forEach((b) => (b.onclick = () => {

@@ -82,7 +82,7 @@
 <script>window.HURANTEA_OWNER_PAGE = true;</script>
 <script src="config.js?v=20261110c"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110d"></script>
+<script src="assets/core.js?v=20261110h"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -195,9 +195,10 @@
       if (j.status === "asking" && c && hrs(c.asked_at) > ch / 2) add(2, `${c.name} hasn't answered`, `"${j.title}" — asked ${ago(c.asked_at)} ago. Send a reminder, or wait: after ${ch} h the next expert is asked automatically.`, "orders");
       if (j.status === "no_match") add(3, "No expert could confirm", `"${j.title}" — contact ${j.client_name} (${j.client_contact}) or find a new expert for these skills.`, "orders");
       if (j.status === "searching" && hrs(j.updated_at || j.created_at) > 1) add(2, "No expert in your network fits", `"${j.title}" — recruit someone with these skills${j.skills?.length ? ": " + [].concat(j.skills).join(", ") : ""}.`, "orders");
+      if (j.status === "delivered" && j.problem_at) add(3, "Client reported a problem", `"${j.title}" — ${String(j.problem_text || "").slice(0, 160)}. The payment is on hold: fix it, then release or refund.`, "orders");
       if (j.status === "accepted" && j.payment_status === "awaiting" && hrs(j.updated_at) > 24) add(2, "Payment not received", `"${j.title}" — accepted ${ago(j.updated_at)} ago. Check with the client.`, "orders");
       if (j.status === "accepted" && j.payment_status === "held" && hrs(j.updated_at) > 24 * 7) add(2, "Delivery may be late", `"${j.title}" — paid ${ago(j.updated_at)} ago, not delivered yet.`, "orders");
-      if (j.status === "delivered" && hrs(j.updated_at) > 24 * Number(S.releaseAfterDays || 7)) add(1, "Ready to release", `"${j.title}" — delivered ${ago(j.updated_at)} ago with no complaint.`, "orders");
+      if (j.status === "delivered" && hrs(j.updated_at) > Number(S.releaseHours || 24) && !j.problem_at && !j.talent_id) add(1, "Client has not confirmed yet", `"${j.title}" — delivered ${ago(j.updated_at)} ago. The client has not confirmed; you can release it yourself.`, "orders");
       if (j.status === "paid" && j.payout_status === "pending") add(2, "Payout to send", `"${j.title}" — ${money(j.quote?.providerPrice)} to ${j.quote?.talentName || "the expert"}.`, "money");
     }
     for (const t of data.talent) if (!t.id_verified && t.status === "active") add(1, "ID and age check", `${t.name} (${t.country || "—"}) joined ${ago(t.created_at)} ago — check ID before they can get paid jobs.`, "talent");
@@ -208,7 +209,7 @@
   const DEPTS = { operations: "Operations", growth: "Growth & Sales", delivery: "Delivery & Matching", quality: "Quality & Safety", finance: "Finance & Risk", support: "Support & Reliability", human: "Human board" };
   const COLS = [["ready", "To do"], ["working", "Agents working"], ["checking", "Checking"], ["waiting", "Waiting for you"], ["others", "Waiting for client or expert"], ["blocked", "Blocked"], ["done", "Done today"]];
   function opsCards() {
-    const S = data.settings || {}, ch = Number(S.confirmHours || 12), rel = Number(S.releaseAfterDays || 7), out = [];
+    const S = data.settings || {}, ch = Number(S.confirmHours || 12), rel = Number(S.releaseHours || 24) / 24, out = [];
     const add = (dept, state, pri, title, detail, go, task) => out.push({ dept, state, pri, title, detail, go, task });
     if (S.aiPaused) add("operations", "blocked", "p1", "AI Boss is paused", "New jobs wait until you resume it.", "boss");
     if (N.LIVE && data.ai?.heartbeat && hrs(data.ai.heartbeat) > 0.25) add("operations", "blocked", "p0", "AI Boss may have stopped", `Last run ${ago(data.ai.heartbeat)} ago.`, "boss");
@@ -279,7 +280,8 @@
     if (j.route === "ai" && j.status === "accepted" && j.payment_status === "held") return `<div class="muted" style="font-size:.8rem">${j.ai_work?.final ? (j.ai_work.approved ? "Delivered" : "Waiting for your check") : "AI is making it"}</div>` + btn(j, "refund");
     if (j.status === "accepted" && j.payment_status === "awaiting") return `<div class="muted" style="font-size:.8rem">Waiting for payment</div>` + btn(j, "payin");
     if (j.status === "accepted" && j.payment_status === "held") return btn(j, "deliver") + btn(j, "refund");
-    if (j.status === "delivered") return btn(j, "release") + btn(j, "refund");
+    if (j.status === "delivered") return (j.problem_at ? `<div style="font-size:.8rem"><span class="tag bad">Problem reported</span><div class="muted" style="margin-top:4px;max-width:260px;white-space:pre-wrap">${esc(j.problem_text || "")}</div></div>`
+      : `<div class="muted" style="font-size:.8rem">${j.talent_id && j.delivered_at ? "Releases by itself " + new Date(new Date(j.delivered_at).getTime() + (Number((data.settings || {}).releaseHours) || 24) * 36e5).toLocaleString() + ", or when the client confirms" : "Waiting for the client to confirm"}</div>`) + btn(j, "release") + btn(j, "refund");
     if (j.status === "paid" && j.payout_status === "pending") return btn(j, "sent");
     return "";
   }
@@ -305,7 +307,7 @@
             <label>Freelancers are paid through${sel("payoutProvider", [["payoneer", "Payoneer (recommended for Bangladesh)"], ["wise", "Wise Business"], ["bank", "Bank transfer"]])}</label>
             <div class="row2">
               <label>Payout schedule${sel("payoutSchedule", [["daily", "Daily"], ["weekly", "Weekly"], ["monthly", "Monthly"]])}</label>
-              <label>Auto-release after (days)<input name="releaseAfterDays" type="number" min="1" max="30" value="${esc(S.releaseAfterDays ?? 7)}"></label>
+              <label>Expert jobs: auto-release after (hours)<input name="releaseHours" type="number" min="1" max="720" value="${esc(S.releaseHours ?? 24)}"></label>
               <label>Time each expert has to confirm (hours) <span class="hint">then the next expert is asked</span><input name="confirmHours" type="number" min="1" max="72" value="${esc(S.confirmHours ?? 12)}"></label>
             </div>
             <label>Auto-approve payouts up to (USD) <span class="hint">0 = you approve every payout</span><input name="autoPayoutLimit" type="number" min="0" value="${esc(S.autoPayoutLimit ?? 0)}"></label>
@@ -468,7 +470,7 @@
       await api.updateJob(b.dataset.id, patch); toast("Updated"); load(); }));
     const sf = document.getElementById("setForm");
     if (sf) sf.onsubmit = async (e) => { e.preventDefault(); const v = Object.fromEntries(new FormData(sf).entries());
-      v.autoPayoutLimit = Number(v.autoPayoutLimit || 0); v.releaseAfterDays = Number(v.releaseAfterDays || 7); v.confirmHours = Math.min(72, Math.max(1, Number(v.confirmHours || 12)));
+      v.autoPayoutLimit = Number(v.autoPayoutLimit || 0); v.releaseHours = Math.min(720, Math.max(1, Number(v.releaseHours || 24))); v.confirmHours = Math.min(72, Math.max(1, Number(v.confirmHours || 12)));
       try { await api.saveSettings({ ...data.settings, ...v }); toast("Settings saved"); load(); } catch (err) { toast(err.message); } };
     dash.querySelectorAll("[data-rt]").forEach((b) => (b.onclick = async () => { await api.updateRating(isNaN(+b.dataset.rt) ? b.dataset.rt : +b.dataset.rt, { approved: b.dataset.to === "true" }); load(); }));
     dash.querySelectorAll("[data-idv]").forEach((b) => (b.onclick = async () => { if (!confirm("Confirm you checked this person's ID and they are 18 or older?")) return; await api.updateTalent(b.dataset.idv, { id_verified: true }); toast("ID verified — can now get paid jobs"); load(); }));
