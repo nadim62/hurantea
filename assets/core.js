@@ -87,10 +87,10 @@
     t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3200);
   }
   const STATUS = {
-    received: ["Received", "", "Our AI is reading your request."],
+    received: ["Received", "", "Your request is queued for review."],
     searching: ["Finding talent", "warn", "We're matching the right expert."],
     quoted: ["Offer ready", "ok", "Your fixed-price offer is ready."],
-    accepted: ["In progress", "", "Your expert is working on it."],
+    accepted: ["Accepted", "", "Your offer is accepted. Check the next step below."],
     delivered: ["Delivered", "ok", "Work delivered. Please review it."],
     paid: ["Completed", "ok", "Done and paid. Thank you!"],
     declined: ["Offer declined", "bad", "You declined this offer."],
@@ -99,8 +99,27 @@
     no_match: ["No confirmed match yet", "bad", "None of the experts we asked could take this on right now."],
     cancelled: ["Cancelled", "", "You cancelled this request."],
     clarify: ["Needs your answer", "warn", "Please answer a few quick questions so we can give you an exact price."],
-    ai_check: ["AI is making your sample", "warn", "HURANTEA's AI is preparing a free sample and a fixed price for you."],
+    ai_check: ["Awaiting review", "warn", "The sample and price are waiting for our review."],
   };
+  // Public-safe status, independent of private agent orchestration.
+  function requestStatus(r) {
+    const phase = r.progress?.phase;
+    const states = {
+      queued: ["Queued", "warn", "Your request is saved and waiting for processing."],
+      paused: ["Queued", "warn", "Processing is temporarily paused. Your request is saved; no work is running yet."],
+      review: ["Awaiting review", "warn", "Our team needs to review this request before the next step."],
+      sample_review: ["Sample under review", "warn", "The sample and fixed price are waiting for our review."],
+      final_review: ["Work under review", "warn", "The finished work is being reviewed before delivery."],
+      human: ["Waiting for a person", "warn", "This request needs a person. We will update you when someone is available."],
+      payment: ["Awaiting payment", "warn", "Work has not started. Check payment availability below."],
+      sample: ["Preparing sample", "", "Your sample is being prepared."],
+      final: ["Making your work", "", "Your finished work is being prepared."],
+    };
+    if (states[phase]) return states[phase];
+    if (r.status === "accepted" && r.payment_status === "awaiting") return states.payment;
+    if (["received", "searching"].includes(r.status)) return states.queued;
+    return STATUS[r.status] || ["Update pending", "", "Please check again shortly."];
+  }
   // "searching", "asking" and "ai_check" share step 2 on the timeline
   const STEPS = ["received", "asking", "quoted", "accepted", "delivered", "paid"];
 
@@ -371,7 +390,9 @@
         if (files.length) await sb.rpc("attach_files", { p_token: token, p_files: files });
         return token; },
       async joinTalent(p) { await ready; return ok(await sb.rpc("join_talent", { p_name: p.name, p_contact: p.contact, p_country: p.country || "", p_skills: p.skills, p_rate: p.rate, p_bio: p.bio || "", p_adult: !!p.adult, p_payout_method: p.payoutMethod || "", p_payout_details: p.payoutDetails || "" })); },
-      async track(token) { await ready; const d = ok(await sb.rpc("track_request", { p_token: token })); return d && d[0] || null; },
+      async platformStatus() { await ready; try { return ok(await sb.rpc("hurantea_public_status")); } catch { return { processing: "unknown", payments_ready: false }; } },
+      async track(token) { await ready; const d = ok(await sb.rpc("track_request", { p_token: token })); const row = d && d[0] || null;
+        if (!row) return null; try { row.progress = ok(await sb.rpc("hurantea_request_progress", { p_token: token })); } catch { row.progress = null; } return row; },
       async respond(token, accept) { await ready; return ok(await sb.rpc("respond_offer", { p_token: token, p_accept: accept })); },
       async expertOffer(key) { await ready; const d = ok(await sb.rpc("expert_offer", { p_key: key })); return d && d[0] || null; },
       async expertRespond(key, accept) { await ready; return ok(await sb.rpc("expert_respond", { p_key: key, p_accept: accept })); },
@@ -455,5 +476,5 @@
     const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: Uint8Array.from(raw, (c) => c.charCodeAt(0)) }));
     await api.savePush(sub.toJSON()); return true;
   }
-  window.N = { api: LIVE ? liveBackend() : demoBackend(), LIVE, FEE, C, store, esc, money, toast, STATUS, STEPS, mountThemeMenu, ICONS, enablePush };
+  window.N = { api: LIVE ? liveBackend() : demoBackend(), LIVE, FEE, C, store, esc, money, toast, STATUS, requestStatus, STEPS, mountThemeMenu, ICONS, enablePush };
 })();
