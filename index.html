@@ -79,16 +79,16 @@
 
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="modal-box" id="modalBox"></div></div>
 
-<script src="config.js?v=20261110c"></script>
+<script src="config.js?v=20261110fix14"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110j"></script>
+<script src="assets/core.js?v=20261110fix14"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
 <script src="assets/hud.js"></script>
 <script src="assets/fx.js"></script>
 <script src="assets/suggest.js"></script>
-<script src="assets/assist.js?v=20261110h"></script>
+<script src="assets/assist.js?v=20261110fix14"></script>
 <script src="assets/consent.js?v=20261110a"></script>
 <script src="assets/motion.js"></script>
 <script src="assets/core3d.js"></script>
@@ -126,7 +126,7 @@
       <section class="os-hero" id="osHero">
         <div class="wrap os-grid">
           <div class="os-copy">
-            <div class="pill"><span class="dot"></span>${N.LIVE ? "AI Core online" : "Preview · sample data"}</div>
+            <div class="pill"><span class="dot"></span>${N.LIVE ? "Request desk" : "Preview · sample data"}</div>
             <h1 class="os-title">Describe it.<br><span class="grad">AI does the rest.</span></h1>
             <p class="lead">Type any job in any language. HURANTEA's AI Core does it itself when it can, with a free sample and a fixed price. When a person is needed, it matches one verified expert.</p>
             <label for="cmdText" class="cmd-label">What do you need done?</label>
@@ -149,7 +149,7 @@
               <div class="sstep" data-s="0"><span class="eyebrow">01</span><h2>Your request becomes a star</h2><p>The AI Core reads what you wrote — in any language — and turns it into a clear brief.</p></div>
               <div class="sstep" data-s="1"><span class="eyebrow">02</span><h2>AI tries first</h2><p>Writing, translation, simple websites, spreadsheets, research: if the AI can do it well, it makes a free sample and a fixed price, faster and cheaper.</p></div>
               <div class="sstep" data-s="2"><span class="eyebrow">03</span><h2>One line. One expert.</h2><p>When it needs a person, the AI scans a universe of verified talent and one expert confirms a fixed price. No bidding, no guessing.</p></div>
-              <div class="sstep" data-s="3"><span class="eyebrow">04</span><h2>Accept, relax, receive</h2><p>Your money is held safely until you get the work. Every AI result is checked before you receive it.</p>${N.LIVE ? "" : `<p class="muted preview-note">Preview: payments are not connected yet.</p>`}</div>
+              <div class="sstep" data-s="3"><span class="eyebrow">04</span><h2>Accept, relax, receive</h2><p>When checkout is available, your payment status appears under My requests. Every AI result is checked before you receive it.</p>${N.LIVE ? "" : `<p class="muted preview-note">Preview: payments are not connected yet.</p>`}</div>
             </div>
             <div class="story-meter" aria-hidden="true"><i></i></div>
           </div>
@@ -219,7 +219,7 @@
         </div>
         <aside class="card side-list">
           <h3>What happens next</h3>
-          <div><span class="step-n" style="margin:0">1</span><span><b>AI reads your request</b><span class="muted">Instantly, any time of day.</span></span></div>
+          <div><span class="step-n" style="margin:0">1</span><span><b>AI reads your request</b><span class="muted">You can submit any time. Processing time depends on availability.</span></span></div>
           <div><span class="step-n" style="margin:0">2</span><span><b>AI does it, or an expert is matched</b><span class="muted">AI first. A person when the job needs one.</span></span></div>
           <div><span class="step-n" style="margin:0">3</span><span><b>You get a fixed price</b><span class="muted">AI jobs come with a free sample. See it under My requests and accept with one click.</span></span></div>
         </aside>
@@ -295,10 +295,10 @@
           <div class="card"><div class="step-n">${ic("card")}</div><h3>For clients: how you pay</h3>
             <ol style="padding-left:20px;line-height:1.9;margin:0">
               <li>Accept your fixed-price offer.</li>
-              <li>Pay securely by card through our payment partner. Until card checkout opens, we send you a secure payment link.</li>
+              <li>Pay securely by card through our payment partner. If checkout is unavailable, contact support before paying. Never pay into a personal account.</li>
               <li>Your money is <b>held safely</b> — the expert doesn't receive it yet.</li>
               <li>You confirm the work is delivered, then it's released.</li></ol>
-            <p class="muted" style="margin:12px 0 0">Not delivered? You get your money back. One fixed price: for expert jobs the ${Math.round(FEE * 100)}% HURANTEA fee is already included, and for AI jobs the whole price goes to HURANTEA.</p></div>
+            <p class="muted" style="margin:12px 0 0">If delivery fails, contact support to request a refund. Refunds show as complete only after the payment provider confirms them. One fixed price: for expert jobs the ${Math.round(FEE * 100)}% HURANTEA fee is already included, and for AI jobs the whole price goes to HURANTEA.</p></div>
           <div class="card"><div class="step-n">${ic("wallet")}</div><h3>For experts: how you get paid</h3>
             <ol style="padding-left:20px;line-height:1.9;margin:0">
               <li>Do the work and deliver it.</li>
@@ -319,9 +319,9 @@
     track() {
       const codes = myCodes();
       return `<div class="page"><div class="wrap" style="max-width:820px">
-        <div class="page-head"><h1 style="font-size:2rem">My requests</h1><p class="muted">Check your offers and progress. Your requests on this device appear automatically.</p><p class="muted track-note">Codes are saved only in this browser. Keep a copy somewhere safe, and don't share it: anyone with the code can see that request. Lost it? Contact support with the email or WhatsApp you used.</p></div>
+        <div class="page-head"><h1 style="font-size:2rem">My requests</h1><p class="muted">Check your offers and progress. Your requests on this device appear automatically.</p><p class="muted track-note">Codes are saved only in this browser. Keep a copy somewhere safe, and don't share it: anyone with the code can see that request. Lost your code? Use the support link below. Include the request title, date and the contact you used; never send a tracking code or card details.</p></div>
         <div class="card" style="margin-bottom:18px">
-          <form class="form" id="trackForm" style="grid-template-columns:1fr auto;align-items:end">
+          <p><a href="mailto:support@hurantea.com?subject=Lost%20HURANTEA%20tracking%20code">Lost your code? Contact support</a></p><form class="form" id="trackForm" style="grid-template-columns:1fr auto;align-items:end">
             <label>Have a tracking code?<input name="code" placeholder="Paste your tracking code" required></label>
             <button class="btn btn-primary" type="submit">Check</button>
           </form>
@@ -550,7 +550,7 @@
       const ai = r.route === "ai";
       // STRATEGY-001: AI jobs say who is working on them
       const AIST = { quoted: ["Offer ready", "ok", "Your free sample and fixed-price offer are ready."], accepted: ["In progress", "", "HURANTEA's AI is making your full work. It is checked before you get it."], delivered: ["Delivered", "ok", "Your work is ready below. Please review it."] };
-      const st = (ai && AIST[r.status]) || STATUS[r.status] || [r.status, "", ""]; const idx = STEPS.indexOf(["searching", "ai_check"].includes(r.status) ? "asking" : r.status === "clarify" ? "received" : r.status);
+      const st = N.requestStatus(r); const idx = STEPS.indexOf(["searching", "ai_check"].includes(r.status) ? "asking" : r.status === "clarify" ? "received" : r.status);
       const box2 = (inner) => `<div class="card" style="margin-top:14px;padding:14px;background:var(--surface2);box-shadow:none">${inner}</div>`;
       const pre = (t) => `<pre class="ai-out" style="white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;margin:8px 0 0;font-size:.84rem;line-height:1.55">${esc(t).replace(/\*\*(\S(?:[^*\n]*\S)?)\*\*/g, "<b>$1</b>")}</pre>`;
       return `<div class="card" style="margin-bottom:14px">
@@ -579,18 +579,18 @@
         ${r.status === "asking" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> Waiting for the expert's confirmation. You'll only see a price an expert has agreed to.</div>` : ""}
         ${r.status === "no_match" ? `<p class="muted">You can change the request and post it again, or cancel it. We never hand it to someone you haven't approved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Edit and post again</button><button class="btn btn-ghost" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
         ${["received", "searching", "clarify", "asking", "ai_check"].includes(r.status) ? `<div style="margin-top:10px"><button class="linkbtn" data-cancel="${esc(c.token)}">Cancel request</button></div>` : ""}
-        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? (CFGP.cardPayments ? "Pay securely by card. " : "") : "We'll send a secure card payment link to your contact. "}Your money is held safely and only released ${ai ? "after you get the finished work" : "to the expert after you confirm the work is delivered"}.</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px">${CFGP.cardPayments ? `<button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button>` : ""}${CFGP.paypalLink ? `<a class="btn ${CFGP.cardPayments ? "btn-ghost" : "btn-primary"}" target="_blank" rel="noopener" href="${esc(CFGP.paypalLink.replace(/\/+$/, "") + "/" + Number(r.offer_usd).toFixed(2) + "USD")}">Pay ${money(r.offer_usd)} with PayPal</a>` : ""}</div>${CFGP.paypalLink ? `<p class="hint" style="margin-top:8px">${N.t("In the PayPal note, write the title of your job. We confirm your payment within a few hours and the work starts automatically.")}</p>` : ""}${!CFGP.paypalLink && !CFGP.cardPayments ? `<p class="hint">${N.t("We'll send you a payment link shortly.")}</p>` : ""}` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
+        ${r.status === "accepted" && r.payment_status === "awaiting" ? box2(`<b>${N.ICONS.card.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Next: secure payment</b><p class="muted" style="margin:6px 0 0">${N.LIVE ? (CFGP.cardPayments ? "Pay securely by card. " : "") : "We'll send a secure card payment link to your contact. "}${N.LIVE && !CFGP.cardPayments && !CFGP.paypalLink ? "Online payments are unavailable; do not send money until support confirms the payment arrangements." : "Payment and release terms are shown before you pay. Review the agreed scope and payment terms first."}</p>${N.LIVE ? `<div class="cta-row" style="margin-top:10px">${CFGP.cardPayments ? `<button class="btn btn-primary" data-pay="${esc(c.token)}">Pay ${money(r.offer_usd)} by card</button>` : ""}${CFGP.paypalLink ? `<a class="btn ${CFGP.cardPayments ? "btn-ghost" : "btn-primary"}" target="_blank" rel="noopener" href="${esc(CFGP.paypalLink.replace(/\/+$/, "") + "/" + Number(r.offer_usd).toFixed(2) + "USD")}">Pay ${money(r.offer_usd)} with PayPal</a>` : ""}</div>${CFGP.paypalLink ? `<p class="hint" style="margin-top:8px">${N.t("In the PayPal note, write the title of your job. We confirm your payment within a few hours and the work starts automatically.")}</p>` : ""}${!CFGP.paypalLink && !CFGP.cardPayments ? `<p class="hint">${N.t("Card checkout is temporarily unavailable. Please contact support before making a payment.")}</p>` : ""}` : `<p class="hint form-preview">${ai ? "Preview: payments are not connected yet, so a payment is simulated in a few seconds." : "Preview: payments are not connected yet."}</p>`}`) : ""}
         ${r.payment_status === "held" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Payment received and held safely until delivery is confirmed.</p>` : ""}
-        ${ai && r.status === "accepted" && r.payment_status === "held" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
+        ${ai && r.status === "accepted" && r.payment_status === "held" && r.progress?.phase === "final" ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> HURANTEA's AI is making your work. This page updates by itself.</div>` : ""}
         ${ai && r.deliverable ? box2(`<b>${r.locked ? "Your finished work: preview" : "Your finished work"}</b>${pre(r.deliverable)}
           ${r.locked ? `<p class="muted" style="margin:8px 0 0;font-size:.86rem">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} This is the first part (about ${esc(r.preview_pct)}%). Confirm delivery to unlock the full work, with copy and download.</p>` : ""}
           ${r.status === "paid" ? `<div class="cta-row" style="margin-top:10px"><button class="btn btn-primary btn-sm" data-dlcopy="${esc(c.token)}">Copy</button><button class="btn btn-ghost btn-sm" data-dl="${esc(c.token)}" data-kind="${esc(r.kind || "")}">Download</button></div>` : ""}`) : ""}
         ${r.status === "delivered" && r.payment_status === "held" ? box2(r.problem_at
           ? `<b>Problem reported</b><p class="muted" style="margin:6px 0 0">Thank you. We are checking it and will contact you. Your payment stays on hold until this is solved.</p><div class="cta-row" style="margin-top:10px"><button class="btn btn-ghost btn-sm" data-confirm="${esc(c.token)}">It's fine now: confirm delivery</button></div>`
-          : `<b>${ai ? "Happy with the work?" : "Your expert has delivered the work"}</b><p class="muted" style="margin:6px 0 0">${ai ? "Confirm delivery to get the full work." : "Please check what you received and confirm delivery."} Confirming is final: the payment is released and can't be refunded.${r.release_at ? " If we don't hear from you, the payment is released automatically on " + esc(new Date(r.release_at).toLocaleString()) + "." : ""}</p>
+          : `<b>${ai ? "Happy with the work?" : "Your expert has delivered the work"}</b><p class="muted" style="margin:6px 0 0">${ai ? "Confirm delivery to get the full work." : "Please check what you received and confirm delivery."} Confirming releases payment. Report any problem before confirming.${r.release_at ? " If we don't hear from you, the payment is released automatically on " + esc(new Date(r.release_at).toLocaleString()) + "." : ""}</p>
              <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-confirm="${esc(c.token)}">Confirm delivery</button><button class="btn btn-ghost" data-problem="${esc(c.token)}">Report a problem</button></div>`) : ""}
         ${r.status === "paid" ? `<p class="muted" style="margin-top:8px">${N.ICONS.shield.replace('class="ic"','class="ic" style="vertical-align:-4px"')} Delivery confirmed. This job is complete.</p>` : ""}
-        ${["received", "searching"].includes(r.status) ? `<div class="muted" style="font-size:.88rem;margin-top:6px"><span class="typing"><i></i><i></i><i></i></span> AI is working on it — this page updates by itself.</div>` : ""}
+        ${["received", "searching"].includes(r.status) ? `<p class="muted" style="font-size:.88rem">This page checks for updates. Last request update: ${esc(new Date(r.updated_at || r.created_at).toLocaleString())}.</p>` : ""}
       </div>`;
     }).join("");
     const work = Object.fromEntries(rows.filter((x) => x.r && x.r.deliverable).map((x) => [x.c.token, x.r]));
@@ -606,7 +606,7 @@
       try { const r = await api.clientNext(b.dataset.next); toast(r === "asking" ? "Asking the next expert to confirm." : r === "no_match" ? "No other expert could confirm yet." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-pay]").forEach((b) => (b.onclick = async () => { b.disabled = true; const t0 = b.textContent; b.textContent = N.t("Opening the secure payment page…");
       try { location.href = await api.pay(b.dataset.pay); } catch (e) { toast(e.message); b.disabled = false; b.textContent = t0; } }));
-    box.querySelectorAll("[data-confirm]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Confirm delivery? This is final: the payment is released and can't be refunded."))) return; b.disabled = true;
+    box.querySelectorAll("[data-confirm]").forEach((b) => (b.onclick = async () => { if (!confirm(N.t("Confirm delivery and release payment? Report any problem before confirming."))) return; b.disabled = true;
       try { const r = await api.confirmDelivery(b.dataset.confirm); toast(r === "confirmed" ? "Delivery confirmed. Thank you!" : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
     box.querySelectorAll("[data-problem]").forEach((b) => (b.onclick = async () => { const t = prompt(N.t("What is wrong with the work? Please describe it in a few words.")); if (t == null) return; if (t.trim().length < 5) return toast("Please describe the problem in a few words.");
       b.disabled = true; try { const r = await api.reportProblem(b.dataset.problem, t.trim()); toast(r === "reported" ? "Problem reported. Your payment stays on hold." : "Nothing changed."); } catch (e) { toast(e.message); } renderReqs(); }));
@@ -656,6 +656,12 @@
     document.getElementById("modal").classList.remove("open");
     const r = route(); if (r !== "home" && window.NCore) NCore.show(false); document.body.dataset.route = r; lastRoute = r;
     app.innerHTML = pages[r](); wire[r]?.();
+    if (N.LIVE && ["home", "post", "track", "payments", "academy"].includes(r)) {
+      const availability = document.createElement("p"); availability.className = "muted"; availability.setAttribute("role", "status"); availability.id = "serviceAvailability";
+      availability.style.cssText = "max-width:1080px;margin:12px auto;padding:10px 20px;font-size:.88rem";
+      availability.textContent = "Checking request-processing availability…"; app.prepend(availability);
+      api.platformStatus().then(h => { if (!availability.isConnected) return; availability.textContent = h.processing === "available" ? "Requests are being processed. Offers may need owner review before they appear." : h.processing === "paused" ? "Processing is temporarily paused. Requests can be saved, but no new AI work starts until processing resumes." : "Requests can be saved. Processing availability is not confirmed; contact support if you need an update."; }).catch(() => { if (availability.isConnected) availability.textContent = "Processing availability could not be checked. Contact support for help."; });
+    }
     document.querySelectorAll("[data-r]").forEach((a) => a.classList.toggle("on", a.dataset.r === r));
     links.classList.remove("open");
     const anchor = location.hash.split("#")[2]; const target = anchor && document.getElementById(anchor);
