@@ -1,0 +1,90 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>Price-list workbench · HURANTEA</title><style>
+*{box-sizing:border-box}body{margin:0;background:#080909;color:#ede7db;font:16px/1.5 system-ui}main{max-width:1080px;margin:auto;padding:24px}h1{font-size:clamp(28px,5vw,46px);line-height:1.1}section{margin:20px 0;padding:22px;background:#12100d;border:1px solid #45433e;border-radius:16px}label{display:block;margin:12px 0}input,select,button{font:inherit;padding:12px;border-radius:8px;border:1px solid #777;background:#181818;color:#fff;max-width:100%}input,select{width:100%}button{cursor:pointer;margin:6px 6px 6px 0;min-height:44px}button.primary{background:#c6a15b;color:#12100d}button:disabled{opacity:.5;cursor:not-allowed}:focus-visible{outline:3px solid #d0b06c;outline-offset:3px}.grid,.service,.scenario{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.service{grid-template-columns:2fr 1fr 1fr auto;border-bottom:1px solid #555;padding:10px 0}.scenario{border-bottom:1px solid #555;padding:10px 0}.muted{color:#c3bcaf}pre{white-space:pre-wrap;overflow-wrap:anywhere}iframe{width:100%;height:550px;border:1px solid #777;border-radius:12px}input[type=checkbox]{width:auto}#notice{min-height:30px}small{display:block} @media(max-width:640px){main{padding:16px}section{padding:16px}.grid,.service,.scenario{grid-template-columns:1fr}h1{font-size:32px}}
+</style><main><p>HURANTEA · DELIVERY WORKBENCH</p><h1>Your prices. A calculator you can test.</h1><p class="muted">Local preparation tool. Nothing is uploaded, sent, charged or activated. Closing this page loses unsaved work.</p><section><h2>1 · Enter the approved prices</h2><p>Fixed unit prices and whole quantities only. Tax, discounts, minimum charges, surcharges and tiers are not supported here. If your list uses them, stop and request a separate review.</p><div class="grid"><label>Rule version<input id="version" value="draft-v1" maxlength="80"></label><label>Currency<select id="currency"><option>EUR</option><option>USD</option><option>GBP</option><option>AED</option><option>BDT</option></select></label></div><div id="services"></div><button id="add">Add service</button><button id="example">Load fictional example</button></section><section><h2>2 · Check three scenarios</h2><p class="muted">Enter quantities and the subtotals you independently expect. All three must match before export. These checks do not prove every possible input is correct.</p><div id="scenarios"></div><button class="primary" id="test">Test and preview</button><pre id="results" aria-live="polite"></pre><div id="preview"></div></section><section><h2>3 · Confirm this exact version</h2><label><input type="checkbox" id="confirm" disabled> I checked the prices, quantities and all three test results against my source price list.</label><p id="notice" role="status">Enter your prices to begin.</p><button id="manifest" disabled>Download request file</button><button id="calculator" disabled>Download calculator preview</button><small class="muted">The request file can be attached to HURANTEA's existing job form once this workflow is enabled. Export is not owner approval, publication or a sent quote. The calculator is an indicative draft, excluding tax.</small></section></main><script>
+(()=>{
+function validateRules(rules) {
+  if (!rules || !['USD','EUR','GBP','AED','BDT'].includes(rules.currency) ||
+      typeof rules.version !== 'string' || !rules.version.trim() ||
+      !Array.isArray(rules.services) || !rules.services.length || rules.services.length > 100)
+    throw new Error('A version, currency and 1–100 services are required.');
+  for (const key of Object.keys(rules)) if (!['version','currency','services','tax'].includes(key))
+    throw new Error('Unsupported rule: '+key+'. Do not omit pricing conditions.');
+  const ids = new Set();
+  for (const s of rules.services) {
+    if (!s || typeof s.id !== 'string' || !s.id.trim() || ids.has(s.id) ||
+        typeof s.label !== 'string' || !s.label.trim() || s.label.length > 160 ||
+        !Number.isSafeInteger(s.unitMinor) || s.unitMinor < 0 || s.unitMinor > 100000000 ||
+        !Number.isSafeInteger(s.maxQuantity) || s.maxQuantity < 1 || s.maxQuantity > 10000)
+      throw new Error('Invalid or duplicate service rule.');
+    for (const key of Object.keys(s)) if (!['id','label','unitMinor','maxQuantity'].includes(key))
+      throw new Error('Unsupported service rule: '+key+'. Request a separate review.');
+    ids.add(s.id);
+  }
+  // Tax is intentionally outside this first capability; never infer it.
+  if (rules.tax !== undefined) throw new Error('Tax rules require a separately validated capability.');
+  return rules;
+}
+function prepareQuote(rules, enquiry) {
+  validateRules(rules);
+  const questions = [];
+  if (!enquiry || typeof enquiry.id !== 'string' || !enquiry.id.trim())
+    throw new Error('A stable enquiry ID is required.');
+  if (!Array.isArray(enquiry.items) || enquiry.items.length === 0)
+    return { id: enquiry.id, version: rules.version, status: 'clarification_needed', questions: ['Which services do you need?'] };
+  if (enquiry.items.length > 100) throw new Error('Too many line items.');
+  const lines = [], seen = new Set();
+  for (const [i, item] of enquiry.items.entries()) {
+    const service = rules.services.find(s => s.id === item?.serviceId);
+    if (!service) { questions.push(`Line ${i + 1}: choose a service from the approved list.`); continue; }
+    if (seen.has(service.id)) { questions.push(`Combine repeated ${service.label} into one quantity.`); continue; }
+    seen.add(service.id);
+    if (!Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > service.maxQuantity) {
+      questions.push(`${service.label}: enter a whole quantity from 1 to ${service.maxQuantity}.`); continue;
+    }
+    lines.push({ serviceId: service.id, label: service.label, quantity: item.quantity,
+      unitMinor: service.unitMinor, subtotalMinor: service.unitMinor * item.quantity });
+  }
+  if (questions.length) return { id: enquiry.id, version: rules.version, status: 'clarification_needed', questions };
+  const subtotalMinor = lines.reduce((sum, l) => sum + l.subtotalMinor, 0);
+  if (!Number.isSafeInteger(subtotalMinor)) throw new Error('Amount exceeds supported precision.');
+  return { id: enquiry.id, version: rules.version, status: 'draft_ready', currency: rules.currency,
+    lines, subtotalMinor, notice: 'Draft only. Subtotal excludes tax. No quotation has been sent.' };
+}
+function calculatorHTML(manifest) {
+  validateRules(manifest.rules);
+  const encoded=JSON.stringify(manifest.rules).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
+  // No contact data or example enquiries are embedded in the client deliverable.
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; form-action 'none'; connect-src 'none'; base-uri 'none'"><title>Service quotation calculator</title><style>body{font:16px system-ui;background:#080909;color:#ede7db;max-width:760px;margin:auto;padding:32px}main{border:1px solid #444;padding:24px;border-radius:16px}h1{font-size:32px}label{display:block;margin:20px 0 8px}select,input,button{font:inherit;padding:12px;border-radius:8px;box-sizing:border-box;width:100%}button{margin-top:20px;background:#c6a15b;color:#12100d;border:0;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}small{display:block;margin-top:16px;color:#bbb}</style></head><body><main><p>YOUR SERVICES · YOUR APPROVED RULES</p><h1>Get a draft quotation</h1><form id="quote"><label for="service">Service</label><select id="service" required></select><label for="quantity">Quantity (whole units)</label><input id="quantity" type="number" min="1" step="1" value="1" required><button>Calculate draft</button></form><pre id="result" aria-live="polite">Choose a service and quantity.</pre><small>Indicative draft only. Tax is excluded. Nothing is submitted, sent or charged. Confirm the final quotation with the service provider.</small><small id="version"></small></main><script>
+(()=>{
+${validateRules.toString()}
+${prepareQuote.toString()}
+const rules=${encoded};
+const service=document.getElementById('service'),quantity=document.getElementById('quantity');
+for(const s of rules.services){const o=document.createElement('option');o.value=s.id;o.textContent=s.label;service.appendChild(o);}
+const configure=()=>{quantity.max=String(rules.services.find(s=>s.id===service.value).maxQuantity)};
+service.addEventListener('change',configure);configure();
+document.getElementById('version').textContent='Approved rule version: '+rules.version;
+document.getElementById('quote').addEventListener('submit',event=>{event.preventDefault();try{
+const r=prepareQuote(rules,{id:'local-preview',items:[{serviceId:service.value,quantity:Number(quantity.value)}]});
+document.getElementById('result').textContent=r.status==='draft_ready'?r.lines.map(l=>l.label+' × '+l.quantity+' = '+rules.currency+' '+(l.subtotalMinor/100).toFixed(2)).join('\\n')+'\\nSubtotal: '+rules.currency+' '+(r.subtotalMinor/100).toFixed(2):r.questions.join('\\n');
+}catch(e){document.getElementById('result').textContent=e.message;}});
+})();
+<\/script></body></html>`;
+}
+const $=id=>document.getElementById(id); let snapshot=null, previewURL=null, sequence=0;
+function invalidate(){snapshot=null;$('confirm').checked=false;$('confirm').disabled=true;$('manifest').disabled=$('calculator').disabled=true;$('results').textContent='';$('notice').textContent='Not confirmed. Test the current prices again.';$('preview').replaceChildren();if(previewURL){URL.revokeObjectURL(previewURL);previewURL=null}}
+function field(label,value,type='text'){const l=document.createElement('label');l.textContent=label;const i=document.createElement('input');i.type=type;i.value=value;l.append(i);return [l,i]}
+function syncServices(){for(const s of $('scenarios').querySelectorAll('select')){const prior=s.value;s.replaceChildren();for(const row of $('services').children){const o=document.createElement('option');o.value=row.dataset.id;o.textContent=row.querySelector('input').value||'Unnamed service';s.append(o)}if([...s.options].some(o=>o.value===prior))s.value=prior}}
+function addService(label='',price='',max=''){if($('services').children.length>=100)return;const row=document.createElement('div');row.className='service';row.dataset.id='service-'+(++sequence);for(const [name,value] of [['Service name',label],['Unit price (e.g. 75.00)',price],['Maximum whole quantity',max]]){const [l,i]=field(name,value);i.maxLength=name==='Service name'?160:16;row.append(l)}const b=document.createElement('button');b.textContent='Remove';b.setAttribute('aria-label','Remove service');b.onclick=()=>{row.remove();invalidate();syncServices()};row.append(b);$('services').append(row);syncServices()}
+for(let n=1;n<=3;n++){const row=document.createElement('div');row.className='scenario';const l=document.createElement('label');l.textContent='Scenario '+n+' service';l.append(document.createElement('select'));row.append(l,field('Whole quantity','')[0],field('Expected subtotal (no tax)','')[0]);$('scenarios').append(row)}
+function cents(value,label){if(!/^(0|[1-9]\d{0,6})(\.\d{1,2})?$/.test(value.trim()))throw Error(label+': use a nonnegative amount with at most two decimal places, e.g. 12.50.');const [a,b='']=value.trim().split('.');return Number(a)*100+Number(b.padEnd(2,'0'))}
+function whole(value,label){if(!/^[1-9]\d{0,4}$/.test(value.trim()))throw Error(label+': enter a positive whole quantity.');return Number(value)}
+function readRules(){return validateRules({version:$('version').value.trim(),currency:$('currency').value,services:[...$('services').children].map((row,n)=>{const i=row.querySelectorAll('input');return {id:row.dataset.id,label:i[0].value.trim(),unitMinor:cents(i[1].value,'Service '+(n+1)+' price'),maxQuantity:whole(i[2].value,'Service '+(n+1)+' maximum')}})})}
+$('add').onclick=()=>{invalidate();addService()};$('example').onclick=()=>{invalidate();$('services').replaceChildren();addService('Service visit','75.00','10');addService('Additional hour','45.00','40');$('currency').value='EUR';$('version').value='fictional-example-v1';const rows=[...$('scenarios').children];rows.forEach((r,i)=>{r.querySelector('select').selectedIndex=i===2?1:0;r.querySelectorAll('input')[0].value=['1','2','3'][i];r.querySelectorAll('input')[1].value=['75.00','150.00','135.00'][i]})};
+for(const id of ['services','scenarios','version','currency'])$(id).addEventListener('input',()=>{invalidate();if(id==='services')syncServices()});
+$('test').onclick=()=>{invalidate();try{const rules=readRules(),enquiries=[],lines=[];let pass=true;[...$('scenarios').children].forEach((row,n)=>{const inputs=row.querySelectorAll('input'),q={id:'test-'+(n+1),items:[{serviceId:row.querySelector('select').value,quantity:whole(inputs[0].value,'Scenario '+(n+1))}]};const expected=cents(inputs[1].value,'Scenario '+(n+1)+' expected subtotal'),r=prepareQuote(rules,q);enquiries.push(q);if(r.status!=='draft_ready'){pass=false;lines.push('Scenario '+(n+1)+': NEEDS INFORMATION — '+r.questions.join(' '))}else{const ok=r.subtotalMinor===expected;pass=pass&&ok;lines.push('Scenario '+(n+1)+': '+(ok?'PASS':'MISMATCH')+' · '+rules.currency+' '+(r.subtotalMinor/100).toFixed(2)+' (expected '+(expected/100).toFixed(2)+')')}});$('results').textContent=lines.join('\n');if(!pass){$('notice').textContent='Resolve the mismatches before confirming.';return}snapshot={huranteaWorkflow:'quote-calculator-v1',rules:JSON.parse(JSON.stringify(rules)),enquiries};previewURL=URL.createObjectURL(new Blob([calculatorHTML(snapshot)],{type:'text/html'}));const frame=document.createElement('iframe');frame.title='Calculator scenario preview';frame.setAttribute('sandbox','allow-scripts allow-forms');frame.src=previewURL;$('preview').append(frame);$('confirm').disabled=false;$('notice').textContent='Three scenarios passed. Review the preview, then confirm this version.'}catch(e){$('results').textContent=e.message;$('notice').textContent='Nothing exported. Correct the highlighted field described above.'}};
+$('confirm').onchange=()=>{$('manifest').disabled=$('calculator').disabled=!snapshot||!$('confirm').checked;$('notice').textContent=$('confirm').checked?'Current version confirmed locally; no live activation.':'Review and confirm this version.'};
+function download(name,text,type){if(!snapshot||!$('confirm').checked)return;const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+$('manifest').onclick=()=>download('hurantea-price-list-request.json',JSON.stringify(snapshot,null,2),'application/json');$('calculator').onclick=()=>download('hurantea-calculator-preview.html',calculatorHTML(snapshot),'text/html');addService();
+})();
+</script></html>
