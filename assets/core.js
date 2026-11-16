@@ -349,7 +349,7 @@
       async signIn() { await wait(300); return true; }, async signOut() {}, async session() { return true; }, async onAuth() {}, async isOwner() { return true; },
       async jobs() { return db.jobs; }, async talent() { return db.talent; }, async log() { return db.log; },
       async deleteJob(i) { db.jobs = db.jobs.filter((x) => x.id !== i); commit("owner"); },
-      async updateJob(i, patch) { const j = db.jobs.find((x) => x.id === i) || {}; Object.assign(j, patch, { updated_at: now() }); commit("owner");
+      async updateJob(i, patch, revision) { const j = db.jobs.find((x) => x.id === i) || {}; if (revision !== undefined && revision !== (j.automation_revision || 0)) throw Error("This job changed. Refresh and review it again."); Object.assign(j, patch, { automation_revision:(j.automation_revision||0)+1, updated_at: now() }); commit("owner");
         // preview: the Boss reacts a few seconds later, like the live one on its next run
         if (j.status === "received" || (j.route === "ai" && j.status === "accepted" && j.payment_status === "held" && !(j.ai_work || {}).final)) setTimeout(boss, 2500); },
       async updateTalent(i, patch) { Object.assign(db.talent.find((x) => x.id === i) || {}, patch); commit("owner"); },
@@ -359,6 +359,8 @@
       async ratingSummary() { const n = db.ratings.length; return { count: n, avg: n ? db.ratings.reduce((s, r) => s + r.stars, 0) / n : 0, recent: db.ratings.filter((r) => r.approved && r.comment).slice(0, 3) }; },
       async ratings() { return db.ratings; },
       async updateRating(i, patch) { Object.assign(db.ratings.find((x) => x.id === i) || {}, patch); commit("owner"); },
+      async automationSummary() { return {reservedTodayCents:0,measuredTodayMicroUsd:0,unpricedCalls:0,unknownCalls:0,pendingNotifications:0,completedSteps:0,recovery:[]}; },
+      async retryAiStep() { throw new Error("Recovery is only available on the connected owner dashboard."); },
       async saveSettings(d) { db.settings = { ...d }; commit("owner"); await wait(200); },
       async audit() { return db.audit.slice(0, 500); },
       async aiUsage() { return { today: db.ai.day === new Date().toDateString() ? db.ai.calls : 0, heartbeat: db.heartbeat }; },
@@ -387,7 +389,10 @@
           const up = await sb.storage.from("job-files").upload(path, f, { contentType: f.type || "application/octet-stream", upsert: false });
           if (up.error) throw new Error("Could not upload " + f.name + ": " + up.error.message); files.push({ path, name: f.name, size: f.size, type: f.type }); }
         const token = ok(await sb.rpc("submit_job", { p_name: p.name, p_contact: p.contact, p_title: p.title, p_description: p.description, p_budget: p.budget, p_deadline: p.deadline || "", p_request_id: p.requestId || null }));
-        if (files.length) await sb.rpc("attach_files", { p_token: token, p_files: files });
+        if (files.length) {
+          const attached=await sb.rpc("attach_files",{p_token:token,p_files:files});
+          if(attached.error || attached.data!==files.length) throw new Error("Your request was saved, but its files need attention. Keep tracking code "+token+" and contact support before submitting again.");
+        }
         return token; },
       async joinTalent(p) { await ready; return ok(await sb.rpc("join_talent", { p_name: p.name, p_contact: p.contact, p_country: p.country || "", p_skills: p.skills, p_rate: p.rate, p_bio: p.bio || "", p_adult: !!p.adult, p_payout_method: p.payoutMethod || "", p_payout_details: p.payoutDetails || "" })); },
       async platformStatus() { await ready; try { return ok(await sb.rpc("hurantea_public_status")); } catch { return { processing: "unknown", payments_ready: false }; } },
@@ -437,7 +442,11 @@
       async jobs() { await ready; return ok(await sb.from("jobs").select("*").order("created_at", { ascending: false }).limit(500)); },
       async talent() { await ready; return ok(await sb.from("talent").select("*").order("created_at", { ascending: false }).limit(1000)); },
       async log() { await ready; return ok(await sb.from("boss_log").select("*").order("at", { ascending: false }).limit(80)); },
-      async updateJob(i, patch) { await ready; ok(await sb.from("jobs").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", i)); },
+      async updateJob(i, patch, revision) { await ready;
+        if(revision !== undefined) {
+          const r=ok(await sb.rpc("hurantea_owner_write",{p_job:i,p_revision:revision,p_patch:patch}));
+          if(!r) throw Error("This job changed. Refresh and review it again.");
+        } else ok(await sb.from("jobs").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", i)); },
       async deleteJob(i) { await ready; const r = await sb.from("jobs").delete().eq("id", i).select("id"); ok(r); if (!r.data || !r.data.length) throw new Error("Could not delete this job."); },
       async updateTalent(i, patch) { await ready; ok(await sb.from("talent").update(patch).eq("id", i)); },
       async runBoss() {
@@ -452,6 +461,8 @@
       async getSettings() { await ready; const d = ok(await sb.from("settings").select("data").eq("id", 1).maybeSingle()); return d?.data || {}; },
       async saveSettings(data) { await ready; ok(await sb.from("settings").upsert({ id: 1, data, updated_at: new Date().toISOString() })); },
       async audit() { await ready; return ok(await sb.from("audit_log").select("*").order("at", { ascending: false }).limit(500)); },
+      async automationSummary() { await ready; return ok(await sb.rpc("hurantea_automation_summary")); },
+      async retryAiStep(job,revision,key,reason) { await ready; const result=ok(await sb.rpc("hurantea_retry_step",{p_job:job,p_revision:revision,p_key:key,p_reason:reason})); if(result!==true) throw new Error("Job changed or still running. Refresh before retrying."); return result; },
       async aiUsage() { await ready; const today = new Date().toISOString().slice(0, 10);
         const u = ok(await sb.from("ai_usage").select("calls").eq("day", today).maybeSingle()); const h = ok(await sb.from("boss_heartbeat").select("last_run").eq("id", 1).maybeSingle());
         return { today: u?.calls || 0, heartbeat: h?.last_run || null }; },
