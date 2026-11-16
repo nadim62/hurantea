@@ -82,7 +82,7 @@
 <script>window.HURANTEA_OWNER_PAGE = true;</script>
 <script src="config.js?v=20261110fix14"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110fix14"></script>
+<script src="assets/core.js?v=20261116"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -144,8 +144,8 @@
   }
 
   async function load(force) {
-    try { const [jobs, talent, log, settings, ratings, audit, ai, ops, staff] = await Promise.all([api.jobs(), api.talent(), api.log(), api.getSettings(), api.ratings(), api.audit().catch(() => []), api.aiUsage().catch(() => ({})), api.opsTasks().catch(() => []), api.staffList().catch(() => [])]);
-      data = { jobs, talent, log, settings, ratings, audit, ai, ops, staff };
+    try { const [jobs, talent, log, settings, ratings, audit, ai, ops, staff, automation] = await Promise.all([api.jobs(), api.talent(), api.log(), api.getSettings(), api.ratings(), api.audit().catch(() => []), api.aiUsage().catch(() => ({})), api.opsTasks().catch(() => []), api.staffList().catch(() => []), api.automationSummary().catch(() => null)]);
+      data = { jobs, talent, log, settings, ratings, audit, ai, ops, staff, automation };
       // DIAG-051: the 20-second refresh never wipes what you are typing or a two-step setup in progress
       const a = document.activeElement, typing = a && dash.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
       const sig = JSON.stringify(needs().map((n) => n.title + n.detail));
@@ -450,6 +450,14 @@
               <div class="muted instr-note">About 5–10 calls per AI job (two AIs and a quality check per round). Above the limit, jobs wait until tomorrow.</div></div>
             <div class="instr-cell"><div class="lbl">Last run</div><div class="instr-big">${data.ai?.heartbeat ? ago(data.ai.heartbeat) : "—"}</div><div class="muted instr-note">${N.LIVE ? "Should be under 5 min." : "Preview: runs after each new job."}</div></div>
           </div>`; })()}
+          <form class="form" id="budgetF" style="margin-top:18px"><h3>AI spending reservations</h3><p><a class="btn btn-ghost" href="price-list-workbench.html" target="_blank" rel="noopener">Prepare and test a price list</a></p><p class="muted">${data.automation ? `Today reserved: ${money(data.automation.reservedTodayCents/100)} · Usage-based cost estimate: ${money((data.automation.measuredTodayMicroUsd||0)/1000000)} · Calls without measured cost: ${data.automation.unpricedCalls||0} · Calls to reconcile: ${data.automation.unknownCalls} · Saved steps: ${data.automation.completedSteps} · Emails queued: ${data.automation.pendingNotifications} · Email review needed: ${data.automation.notificationReview||0} · Accepted by email provider (not delivery receipts): ${data.automation.notificationAccepted||0}` : "Automation usage unavailable — check migration and permissions."}</p><label>Quotation calculator price (USD; 0 disables offers)<input name="quotePrice" type="number" min="0" max="10000" step="0.01" value="${esc(S.quoteWorkflowPriceUsd||0)}"></label>
+          <p class="muted">Reserved allowances, not provider invoices. Unknown calls remain reserved. Set a conservative per-call allowance for your configured models before enabling work. Zero keeps calls blocked.</p>
+          <div class="row2"><label>Per call allowance (USD)<input name="call" type="number" min="0" max="1000" step="0.01" required value="${esc((S.aiCallReserveCents||0)/100)}"></label>
+          <label>Per job ceiling (USD)<input name="job" type="number" min="0" max="10000" step="0.01" required value="${esc((S.aiJobBudgetCents||0)/100)}"></label>
+          <label>Daily ceiling (USD, UTC)<input name="day" type="number" min="0" max="100000" step="0.01" required value="${esc((S.aiDailyBudgetCents||0)/100)}"></label></div>
+          <button class="btn btn-primary" type="submit">Save limits</button></form>
+          <div role="region" style="margin-top:24px" aria-label="AI recovery"><h3>AI calls needing review</h3><p class="muted">Check the provider outcome first. Retrying may incur another charge. Existing allowances stay reserved; this does not resume paused AI or approve delivery.</p>
+          ${(data.automation?.recovery||[]).map((r,i)=>`<div class="panel" style="margin-bottom:12px"><strong>${esc(r.title||"Request")}</strong><p>${esc(r.state)} · ${ago(r.updated_at)}</p><button class="btn btn-ghost" data-retry-step="${i}">Authorize a retry</button></div>`).join("")||'<p class="muted">No stalled calls awaiting a retry decision.</p>'}</div>
           <form class="form" id="aiSetF" style="margin-top:18px">
             <h3 style="margin:0">AI first</h3>
             <label class="check"><input type="checkbox" name="aiFirst" ${S.aiFirst !== false ? "checked" : ""}><span>HURANTEA's AI does every job it can. Experts get the jobs that need a person.</span></label>
@@ -536,15 +544,27 @@
     dash.querySelectorAll("[data-aiok]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.aiok); if (!j) return; const w = j.ai_work || {}, q = j.quote || {}; b.disabled = true;
       try {
         if (j.status === "ai_check") { const inp = dash.querySelector(`[data-aiprice="${b.dataset.aiok}"]`), price = Math.max(1, Math.round((Number(inp && inp.value) || Number(q.total) || 5) * 100) / 100);
-          await api.updateJob(j.id, { status: "quoted", offer_usd: price, offer_text: w.plan || "HURANTEA's AI will deliver the complete work.", quote: { ...q, total: price, fee: price } }); toast("Sample and price shown to the client"); }
-        else { const fresh = (await api.jobs()).find((x) => String(x.id) === b.dataset.aiok) || j;   // approve exactly the version you read
-          if (String((fresh.ai_work || {}).versions || 1) !== b.dataset.aiv || !(fresh.ai_work || {}).final) { toast("A newer version arrived — please check it first."); load(true); return; }
-          await api.updateJob(j.id, { status: "delivered", ai_work: { ...w, approved: true, approved_at: new Date().toISOString() } }); toast("Delivered to the client"); }
+          await api.updateJob(j.id, { status: "quoted", offer_usd: price, offer_text: w.plan || "HURANTEA's AI will deliver the complete work.", quote: { ...q, total: price, fee: price } }, j.automation_revision ?? 0); toast("Sample and price shown to the client"); }
+        else {
+          await api.updateJob(j.id, { status: "delivered", ai_work: { ...w, approved: true, approved_at: new Date().toISOString() } }, j.automation_revision ?? 0); toast("Delivered to the client"); }
       } catch (e) { toast(e.message); } load(true); }));
     dash.querySelectorAll("[data-airedo]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.airedo); if (!j) return; const note = (dash.querySelector(`[data-ainote="${b.dataset.airedo}"]`)?.value || "").trim().slice(0, 500);
-      b.disabled = true; try { await api.updateJob(j.id, { ai_work: { ...j.ai_work, final: null, approved: false, note, fails: 0, escalated: null } }); toast("The AI is making a new version"); } catch (e) { toast(e.message); } load(true); }));
+      b.disabled = true; try { await api.updateJob(j.id, { ai_work: { ...j.ai_work, final: null, approved: false, note, fails: 0, escalated: null } }, j.automation_revision ?? 0); toast("The AI is making a new version"); } catch (e) { toast(e.message); } load(true); }));
     dash.querySelectorAll("[data-aihuman]").forEach((b) => (b.onclick = async () => { const j = data.jobs.find((x) => String(x.id) === b.dataset.aihuman); if (!j || !confirm("Give this job to a human expert? The AI sample is not shown to the client.")) return; b.disabled = true;
-      try { await api.updateJob(j.id, { route: "expert", status: "received", offer_usd: null, quote: null, offer_text: "We are asking a verified expert to take this on.", ai_work: { ...j.ai_work, handover: "owner", handover_at: new Date().toISOString() } }); toast("Sent to the expert flow"); } catch (e) { toast(e.message); } load(true); }));
+      try { await api.updateJob(j.id, { route: "expert", status: "received", offer_usd: null, quote: null, offer_text: "We are asking a verified expert to take this on.", ai_work: { ...j.ai_work, handover: "owner", handover_at: new Date().toISOString() } }, j.automation_revision ?? 0); toast("Sent to the expert flow"); } catch (e) { toast(e.message); } load(true); }));
+    dash.querySelectorAll("[data-retry-step]").forEach(b=>b.onclick=async()=>{
+      const r=data.automation?.recovery?.[Number(b.dataset.retryStep)];if(!r)return;
+      const reason=prompt("Check the provider dashboard first. Why is another charged attempt appropriate? (12–500 characters)");if(reason===null)return;
+      if(reason.trim().length<12||reason.length>500)return toast("Enter a reason of 12–500 characters.");
+      if(!confirm("Authorize one retry? Previous allowances remain reserved; AI stays paused if currently paused."))return;
+      b.disabled=true;try{await api.retryAiStep(r.job_id,r.automation_revision,r.step_key,reason.trim());toast("Retry authorized; processing settings unchanged");await load(true);}catch(e){toast(e.message);b.disabled=false;}
+    });
+    const bf=document.getElementById("budgetF");
+    if(bf) bf.onsubmit=async(e)=>{e.preventDefault();const fd=new FormData(bf);
+      const amounts=["call","job","day"].map(k=>Math.round(Number(fd.get(k))*100));
+      if(amounts.some(x=>!Number.isSafeInteger(x)||x<0) || (amounts[0]>0 && (amounts[1]<amounts[0]||amounts[2]<amounts[0]))) return toast("Job and daily ceilings must cover at least one call.");
+      try {await api.saveSettings({...data.settings,aiCallReserveCents:amounts[0],aiJobBudgetCents:amounts[1],aiDailyBudgetCents:amounts[2],quoteWorkflowPriceUsd:Math.max(0,Math.min(10000,Number(fd.get("quotePrice"))||0))});toast("Limits saved; processing state unchanged");load(true);}catch(err){toast(err.message);}
+    };
     const asf = document.getElementById("aiSetF");
     if (asf) asf.onsubmit = async (e) => { e.preventDefault(); const fd = new FormData(asf);
       const v = { aiFirst: !!fd.get("aiFirst"), aiReview: !!fd.get("aiReview"), aiKinds: fd.getAll("kind"), aiPricePct: Math.max(5, Math.min(100, Math.round(Number(fd.get("aiPricePct")) || 50))), aiMinPrice: Math.max(1, Math.min(1000, Number(fd.get("aiMinPrice")) || 5)) };
