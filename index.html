@@ -81,7 +81,7 @@
 
 <script src="config.js?v=20261110fix14"></script>
 <script src="assets/bright.js"></script>
-<script src="assets/core.js?v=20261110fix14"></script>
+<script src="assets/core.js?v=20261116"></script>
 <script src="assets/i18n.js"></script>
 <script src="assets/universe.js"></script>
 <script src="assets/cosmos.js"></script>
@@ -202,7 +202,7 @@
             <label>What do you need done?<input name="title" required maxlength="160" placeholder="e.g. Fix the checkout on my online shop"></label>
             <label>Details <span class="hint">The more detail, the better the match. Any language.</span>
               <textarea name="description" required maxlength="6000" placeholder="What should be delivered? Any links, files or examples?"></textarea></label>
-            <label>Files <span class="hint">Optional — PDF, photos, Word, Excel or text. Up to 5 files, 10 MB each.</span><input name="files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx,.xls,.xlsx"></label>
+            <label>Files <span class="hint">Optional — up to 5 files, 10 MB each. Automatic reading supports UTF-8 TXT, CSV, Markdown and JSON up to 64 KB per file. Other formats need review.</span><input name="files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx"></label>
             <div class="row2">
               <label>Budget (USD) <span class="hint">Optional</span><input name="budget" type="number" min="0" step="1" placeholder="e.g. 150"></label>
               <label>Deadline <span class="hint">Optional</span><input name="deadline" maxlength="80" placeholder="e.g. Within 1 week"></label>
@@ -563,7 +563,7 @@
           return box2(`<b>Why it was not accepted</b><p style="margin:6px 0 0;white-space:pre-wrap">${why ? esc(why) : N.t("No details were recorded for this request.")}</p>`) +
             box2(`<b>Fix it and send it again</b><p class="muted" style="margin:6px 0 0">Answer the point above, correct your request, or add a document (for example proof that the website or material is yours). We check it again, free of charge.</p>
               <label style="display:block;margin-top:10px">Your answer or correction<textarea data-appealbox="${esc(c.token)}" maxlength="2000" style="min-height:90px" placeholder="For example: This is my own website. I am the owner of the restaurant."></textarea></label>
-              <label style="display:block;margin-top:10px">Documents <span class="hint">Optional. Up to 5 files, 10 MB each.</span><input type="file" data-appealfiles="${esc(c.token)}" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx,.xls,.xlsx"></label>
+              <label style="display:block;margin-top:10px">Documents <span class="hint">Optional. Up to 5 files, 10 MB each.</span><input type="file" data-appealfiles="${esc(c.token)}" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx"></label>
               <div class="cta-row" style="margin-top:10px"><button class="btn btn-primary" data-appeal="${esc(c.token)}">Send for a new check</button><button class="btn btn-ghost" data-again="${esc(c.token)}" data-title="${esc(r.title)}">Post as a new request</button></div>
               <p class="hint" style="margin-top:8px">A request can be checked again twice.</p>`); })() : ""}
         ${r.offer_usd != null && ["quoted", "accepted", "delivered", "paid"].includes(r.status) ? `<div class="price">${money(r.offer_usd)} <span class="muted" style="font-size:.9rem;font-weight:500">${ai ? "fixed price · made by HURANTEA AI" : "fixed price · confirmed by the expert"}</span></div>` : ""}
@@ -595,7 +595,7 @@
     }).join("");
     const work = Object.fromEntries(rows.filter((x) => x.r && x.r.deliverable).map((x) => [x.c.token, x.r]));
     box.querySelectorAll("[data-dlcopy]").forEach((b) => (b.onclick = () => navigator.clipboard?.writeText(work[b.dataset.dlcopy].deliverable).then(() => toast("Copied"), () => toast("Select the text and copy it"))));
-    box.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => { const w = work[b.dataset.dl], ext = { website: "html", code: "txt" }[b.dataset.kind] || "txt";
+    box.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => { const w = work[b.dataset.dl], ext = { website: "html", quote_calculator: "html", code: "txt" }[b.dataset.kind] || "txt";
       const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([w.deliverable], { type: ext === "html" ? "text/html" : "text/plain" })); a.download = (w.title || "hurantea-work").replace(/[^\w\- ]+/g, "").trim().slice(0, 60).replace(/\s+/g, "-") + "." + ext; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }));
     box.querySelectorAll("[data-ans]").forEach((b) => (b.onclick = async () => { const t = box.querySelector(`[data-ansbox="${b.dataset.ans}"]`), v = (t && t.value || "").trim();
       if (v.length < 2) { t && t.focus(); return toast("Please write your answers first."); } b.disabled = true;
